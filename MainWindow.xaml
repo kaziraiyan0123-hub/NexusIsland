@@ -1,0 +1,1783 @@
+<Window x:Class="NexusIsland.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:NexusIsland.ViewModels"
+        xmlns:core="clr-namespace:NexusIsland.Core"
+        xmlns:services="clr-namespace:NexusIsland.Services"
+        mc:Ignorable="d"
+        Title="NEXUS ISLAND"
+        Icon="Assets/app_logo.png"
+        FontFamily="Segoe UI Variable Text, Segoe UI, sans-serif"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        RenderOptions.ClearTypeHint="Enabled"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="{x:Null}"
+        Topmost="{Binding AlwaysOnTop}"
+        ShowInTaskbar="False"
+        WindowStartupLocation="Manual"
+        Width="680"
+        Height="560"
+        ResizeMode="NoResize">
+
+    <Window.DataContext>
+        <vm:MainViewModel x:Name="ViewModel" />
+    </Window.DataContext>
+
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0" Background="{x:Null}">
+        <!-- Radiant Ambient Bloom Halo behind Island Container -->
+        <Border HorizontalAlignment="Center" VerticalAlignment="Top"
+                Width="{Binding ElementName=IslandContainer, Path=ActualWidth}"
+                Height="{Binding ElementName=IslandContainer, Path=ActualHeight}"
+                CornerRadius="{Binding ElementName=IslandContainer, Path=CornerRadius}"
+                Visibility="{Binding AmbientGlowVisibility}"
+                Background="{Binding CurrentTheme.AccentGradient}"
+                Opacity="0.45" IsHitTestVisible="False">
+            <Border.Effect>
+                <BlurEffect Radius="38" RenderingBias="Performance" />
+            </Border.Effect>
+        </Border>
+
+        <!-- Floating Main Island Container (Strictly Centered, Never Moves When Satellite Pops) -->
+        <Border x:Name="IslandContainer"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Width="380" Height="44"
+                Opacity="{Binding IslandOpacity}"
+                Background="{Binding CurrentTheme.BackgroundGradient}"
+                BorderBrush="{Binding CurrentTheme.BorderGradient}"
+                BorderThickness="1.5"
+                CornerRadius="22"
+                ClipToBounds="True"
+                Effect="{StaticResource IslandShadow}"
+                MouseEnter="IslandContainer_MouseEnter"
+                MouseLeave="IslandContainer_MouseLeave"
+                PreviewMouseWheel="IslandContainer_PreviewMouseWheel">
+
+            <Border.ContextMenu>
+                <ContextMenu Background="#D0141620" BorderBrush="#45FFFFFF" BorderThickness="1">
+                    <MenuItem Header="⏻ Turn Off Nexus Island" Command="{Binding ExitAppCommand}" Foreground="#FF453A" FontWeight="SemiBold" />
+                    <MenuItem Header="⌃ Collapse Island" Command="{Binding CollapseCommand}" Foreground="#FFFFFF" />
+                    <Separator Background="#25FFFFFF" />
+                    <MenuItem Header="🎵 Nexus Music Player" Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.MusicPlayer}" Foreground="#FFFFFF" />
+                    <MenuItem Header="📅 Notch Nook Mode" Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.NotchNook}" Foreground="#FFFFFF" />
+                    <MenuItem Header="🎛️ Control Center HUD" Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.ControlCenter}" Foreground="#FFFFFF" />
+                    <Separator Background="#25FFFFFF" />
+                    <MenuItem Header="{Binding AmbientGlowStatusText}" Command="{Binding ToggleAmbientGlowCommand}" Foreground="#FFFFFF" />
+                    <MenuItem Header="{Binding SoundStatusText}" Command="{Binding ToggleSoundEffectsCommand}" Foreground="#FFFFFF" />
+                    <Separator Background="#25FFFFFF" />
+                    <MenuItem Header="⚙ Island Settings" Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.ControlCenter}" Foreground="#8E8E93" />
+                </ContextMenu>
+            </Border.ContextMenu>
+
+                <Border.LayoutTransform>
+                    <ScaleTransform ScaleX="{Binding IslandScale}" ScaleY="{Binding IslandScale}" />
+                </Border.LayoutTransform>
+
+                <Border.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="IslandSpringScale" ScaleX="1.0" ScaleY="1.0" />
+                    </TransformGroup>
+                </Border.RenderTransform>
+                <Border.RenderTransformOrigin>
+                    <Point X="0.5" Y="0.0" />
+                </Border.RenderTransformOrigin>
+
+                <Grid x:Name="ContentRoot" Background="{x:Null}">
+                    <!-- Glass Specular Hairline Chamfer at Top Edge -->
+                    <Border VerticalAlignment="Top" Height="1.5" Margin="16,0,16,0" CornerRadius="1"
+                            Opacity="0.75" IsHitTestVisible="False">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#00FFFFFF" Offset="0.0" />
+                                <GradientStop Color="#60FFFFFF" Offset="0.25" />
+                                <GradientStop Color="#B0FFFFFF" Offset="0.5" />
+                                <GradientStop Color="#60FFFFFF" Offset="0.75" />
+                                <GradientStop Color="#00FFFFFF" Offset="1.0" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <!-- Frosted Glass Upper Curved Reflection Sheen -->
+                    <Border VerticalAlignment="Top" Height="32" CornerRadius="22,22,0,0" IsHitTestVisible="False" Opacity="0.07">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#FFFFFF" Offset="0.0" />
+                                <GradientStop Color="#00FFFFFF" Offset="1.0" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <!-- ================= 1. COMPACT PILL MODE ================= -->
+                    <Grid x:Name="CompactView"
+                          Opacity="1.0"
+                          Visibility="Visible"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Margin="14,0" Cursor="Hand"
+                          PreviewMouseDown="CompactView_PreviewMouseDown"
+                          PreviewMouseMove="CompactView_PreviewMouseMove"
+                          PreviewMouseUp="CompactView_PreviewMouseUp"
+                          TouchDown="CompactView_TouchDown"
+                          TouchMove="CompactView_TouchMove"
+                          TouchUp="CompactView_TouchUp">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: Stealth Camera Dot / Album Art & Clock -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="0">
+                            <!-- Stealth Sensor Aperture Dot (Shows when media NOT playing) -->
+                            <Border Width="11" Height="11" CornerRadius="5.5" Background="#06080D" Margin="0,0,8,0"
+                                    BorderBrush="#20FFFFFF" BorderThickness="1" VerticalAlignment="Center"
+                                    Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                <Grid>
+                                    <Ellipse Width="5.5" Height="5.5" Fill="#0D121A" />
+                                    <Ellipse Width="2" Height="2" Fill="#007AFF" Opacity="0.8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1.5,1.5,0" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Mini Album Art (Shows when media IS playing) -->
+                            <Border Width="20" Height="20" CornerRadius="6" Background="#22FFFFFF" Margin="0,0,8,0"
+                                    BorderBrush="#35FFFFFF" BorderThickness="1" ClipToBounds="True" VerticalAlignment="Center"
+                                    Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid>
+                                    <Image Source="{Binding MediaThumbnail}" Stretch="UniformToFill"
+                                           Visibility="{Binding HasMediaThumbnail, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <TextBlock Text="🎵" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Visibility="{Binding HasMediaThumbnail, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Clock Display (Shows when media NOT playing) -->
+                            <TextBlock Text="{Binding CurrentTime}" Foreground="#FFFFFF"
+                                       FontWeight="SemiBold" FontSize="12" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                        </StackPanel>
+
+                        <!-- Center: Live Now Playing Marquee or Notification Banner -->
+                        <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6,0">
+                            <!-- Notification Active Banner -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                        Visibility="{Binding HasActiveNotification, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding NotificationIcon}" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding NotificationTitle}" FontWeight="Bold" FontSize="11"
+                                           Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                <TextBlock Text="{Binding NotificationMessage}" MaxWidth="130" TextTrimming="CharacterEllipsis"
+                                           Foreground="#8E8E93" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Now Playing Track Title (When Music Playing and No Notification) -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding HasActiveNotification}" Value="False" />
+                                                    <Condition Binding="{Binding IsMediaPlaying}" Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <TextBlock Text="{Binding MediaDisplayTitle}" MaxWidth="190" TextTrimming="CharacterEllipsis"
+                                           Foreground="#FFFFFF" FontWeight="SemiBold"
+                                           FontSize="11.5" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Right: Battery Pill OR Live Jumping Apple Equalizer -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="2">
+                            <!-- Live Apple Equalizer Waveform Bars (When Music Playing) -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Height="14" Margin="0,0,2,0"
+                                        Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border Width="2.5" Height="{Binding EqBar1}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.25" Margin="1,0" VerticalAlignment="Bottom" />
+                                <Border Width="2.5" Height="{Binding EqBar2}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.25" Margin="1,0" VerticalAlignment="Bottom" />
+                                <Border Width="2.5" Height="{Binding EqBar4}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.25" Margin="1,0" VerticalAlignment="Bottom" />
+                                <Border Width="2.5" Height="{Binding EqBar6}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.25" Margin="1,0" VerticalAlignment="Bottom" />
+                            </StackPanel>
+
+                            <!-- Apple Battery Indicator (When Music NOT Playing) -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                        Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                <!-- Apple-Style Battery Pill with Terminal Pip -->
+                                <Grid Margin="0,0,5,0" VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="22" />
+                                        <ColumnDefinition Width="2" />
+                                    </Grid.ColumnDefinitions>
+                                    <!-- Main Battery Body -->
+                                    <Border Grid.Column="0" Width="22" Height="11" CornerRadius="3"
+                                            BorderBrush="#8E8E93" BorderThickness="1" Padding="1.5">
+                                        <Grid>
+                                            <Border HorizontalAlignment="Left" CornerRadius="1.5"
+                                                    Width="{Binding BatteryWidth}"
+                                                    Background="{Binding BatteryBrush}" />
+                                            <TextBlock Text="⚡" FontSize="7.5" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="#FFFFFF" FontWeight="Bold"
+                                                       Visibility="{Binding Battery.IsCharging, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </Grid>
+                                    </Border>
+                                    <!-- Right Positive Terminal Pip -->
+                                    <Border Grid.Column="1" Width="1.5" Height="4" CornerRadius="0,1,1,0"
+                                            Background="#8E8E93" VerticalAlignment="Center" />
+                                </Grid>
+
+                                <!-- Battery Percent Text -->
+                                <TextBlock Text="{Binding BatteryPercent, StringFormat='{}{0}%'}"
+                                           Foreground="#8E8E93" FontSize="10.5" FontWeight="SemiBold"
+                                           FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+
+                <!-- ================= 2. EXPANDED CONTROL CENTER (PHASE 3) ================= -->
+                <Grid x:Name="ExpandedView"
+                      Opacity="0.0"
+                      Visibility="Collapsed"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                      Margin="18,14"
+                      TouchDown="ExpandedView_TouchDown"
+                      TouchMove="ExpandedView_TouchMove"
+                      TouchUp="ExpandedView_TouchUp">
+                    <Grid.RenderTransform>
+                        <TranslateTransform x:Name="ExpandedViewTranslate" X="0" Y="0" />
+                    </Grid.RenderTransform>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Row 0: Header with Apple Notch Mode Switcher & Stealth Notch -->
+                    <Grid x:Name="HeaderBar" Grid.Row="0" Margin="0,0,0,10" Background="Transparent" Cursor="SizeAll" MouseDown="HeaderBar_MouseDown">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: Frosted Glass Mode Switcher Capsule (Player | Nook | HUD) -->
+                        <Border Grid.Column="0" Background="#20FFFFFF" CornerRadius="12" Padding="2" BorderBrush="#35FFFFFF" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.MusicPlayer}"
+                                        Tag="{Binding IsMusicPlayerMode}" Style="{StaticResource HudTabButton}" Padding="8,3" MinHeight="22">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🎵 " FontSize="10" />
+                                        <TextBlock Text="Player" FontSize="10.5" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.NotchNook}"
+                                        Tag="{Binding IsNotchNookMode}" Style="{StaticResource HudTabButton}" Padding="8,3" MinHeight="22">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📅 " FontSize="10" />
+                                        <TextBlock Text="Nook" FontSize="10.5" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.ControlCenter}"
+                                        Tag="{Binding IsControlCenterMode}" Style="{StaticResource HudTabButton}" Padding="8,3" MinHeight="22">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🎛️ " FontSize="10" />
+                                        <TextBlock Text="HUD" FontSize="10.5" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Center: Sleek Stealth Sensor Aperture -->
+                        <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Width="10" Height="10" CornerRadius="5" Background="#06080D"
+                                BorderBrush="#25FFFFFF" BorderThickness="0.75" ToolTip="Nexus Island Camera &amp; Sensor Aperture">
+                            <Grid>
+                                <Ellipse Width="5" Height="5" Fill="#0D121A" />
+                                <Ellipse Width="1.5" Height="1.5" Fill="#007AFF" Opacity="0.85" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1.5,1.5,0" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Right: Turn Off Button & Minimal Circular Glass Collapse Button -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Turn Off / Power Button -->
+                            <Button Command="{Binding ExitAppCommand}"
+                                    Style="{StaticResource HudCircleButton}" Width="24" Height="24" Margin="0,0,6,0"
+                                    ToolTip="Turn Off Nexus Island (Exit)">
+                                <TextBlock Text="⏻" FontSize="11" FontWeight="Bold" Foreground="#FF453A" Margin="0,0,0,1" />
+                            </Button>
+
+                            <!-- Collapse to Pill Button -->
+                            <Button Command="{Binding CollapseCommand}"
+                                    Style="{StaticResource HudCircleButton}" Width="24" Height="24"
+                                    ToolTip="Collapse to Pill">
+                                <TextBlock Text="✕" FontSize="10" FontWeight="Bold" Foreground="#8E8E93" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ================= MODE 1: NEXUS MUSIC PLAYER HUD ================= -->
+                    <Grid Grid.Row="1" Visibility="{Binding IsMusicPlayerMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                          Margin="4,0,4,4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Row 0: Album Art + Title/Artist + Live Equalizer (Exact Image 3 Layout) -->
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Frosted Glass Album Art Pod -->
+                            <Border Grid.Column="0" Width="52" Height="52" CornerRadius="12"
+                                    Background="#22FFFFFF" BorderBrush="#35FFFFFF" BorderThickness="1"
+                                    ClipToBounds="True" Margin="0,0,14,0" Effect="{StaticResource AppleButtonShadow}">
+                                <Grid>
+                                    <Image Source="{Binding MediaThumbnail}" Stretch="UniformToFill"
+                                           Visibility="{Binding HasMediaThumbnail, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <Grid Visibility="{Binding HasMediaThumbnail, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                        <Border Background="#15FFFFFF" />
+                                        <TextBlock Text="🎵" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <!-- Song Title & Artist in Segoe UI Variable Display -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <TextBlock Text="{Binding MediaTitle}" FontWeight="Bold" FontSize="13.5"
+                                           Foreground="#FFFFFF" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding MediaArtist}" FontSize="11.5" Foreground="#8E8E93"
+                                           FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                           TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
+                            </StackPanel>
+
+                            <!-- Live Apple Equalizer Waveform Bars (Hidden when idle/paused to eliminate rogue dots) -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Height="18"
+                                        Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border Width="3" Height="{Binding EqBar1}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                <Border Width="3" Height="{Binding EqBar2}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                <Border Width="3" Height="{Binding EqBar4}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                <Border Width="3" Height="{Binding EqBar6}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Row 1: Apple Scrubber Track & Elapsed/Remaining Time (Exact Image 3 Scrubber) -->
+                        <Grid Grid.Row="1" Margin="0,10,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding MediaPositionText}" Foreground="#8E8E93"
+                                       FontSize="10.5" FontWeight="SemiBold" MinWidth="34"
+                                       FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                       VerticalAlignment="Center" HorizontalAlignment="Left" />
+                            <!-- Interactive Apple Scrubber Bar with Drag Seeking -->
+                            <Grid Grid.Column="1" Height="16" Background="Transparent" Cursor="Hand" Margin="6,0"
+                                  PreviewMouseDown="Scrubber_PreviewMouseDown"
+                                  PreviewMouseMove="Scrubber_PreviewMouseMove"
+                                  PreviewMouseUp="Scrubber_PreviewMouseUp"
+                                  TouchDown="Scrubber_TouchDown"
+                                  TouchMove="Scrubber_TouchMove"
+                                  TouchUp="Scrubber_TouchUp">
+                                <Border Height="4" CornerRadius="2" Background="#35FFFFFF" ClipToBounds="True" VerticalAlignment="Center">
+                                    <Border HorizontalAlignment="Stretch" CornerRadius="2" Background="{Binding CurrentTheme.AccentGradient}"
+                                            RenderTransformOrigin="0, 0.5">
+                                        <Border.RenderTransform>
+                                            <ScaleTransform ScaleX="{Binding MediaProgressFraction}" />
+                                        </Border.RenderTransform>
+                                    </Border>
+                                </Border>
+                            </Grid>
+                            <TextBlock Grid.Column="2" Text="{Binding MediaRemainingText}" Foreground="#8E8E93"
+                                       FontSize="10.5" FontWeight="SemiBold"
+                                       FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                       VerticalAlignment="Center" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <!-- Row 2: Playback Transport Controls (Exact Image 3 Apple Controls) -->
+                        <Grid Grid.Row="2" Margin="0,4,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <!-- Apple Previous Track (Dual Triangles) -->
+                                <Button Command="{Binding MediaPrevCommand}" Style="{StaticResource HudCircleButton}"
+                                        Width="38" Height="38" ToolTip="Previous Track">
+                                    <Path Data="M 10,2.5 L 2,8 L 10,13.5 Z M 18,2.5 L 10,8 L 18,13.5 Z" Fill="#FFFFFF"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" Margin="-1,0,0,0" />
+                                </Button>
+                                <!-- Iconic Large White Circular Play/Pause Button (Vector Graphics) -->
+                                <Button Command="{Binding MediaPlayPauseCommand}" Style="{StaticResource ApplePlayPauseButton}"
+                                        Width="46" Height="46" Margin="22,0" ToolTip="Play / Pause">
+                                    <Grid Width="16" Height="16">
+                                        <!-- Vector Pause: Two crisp rounded Apple vertical bars -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Border Width="3.5" Height="14" CornerRadius="1.75" Background="#000000" Margin="0,0,4,0" />
+                                            <Border Width="3.5" Height="14" CornerRadius="1.75" Background="#000000" />
+                                        </StackPanel>
+                                        <!-- Vector Play: Crisp Apple triangle -->
+                                        <Path Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                                              Data="M 0,0 L 13,8 L 0,16 Z" Fill="#000000" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0" />
+                                    </Grid>
+                                </Button>
+                                <!-- Apple Next Track (Dual Triangles) -->
+                                <Button Command="{Binding MediaNextCommand}" Style="{StaticResource HudCircleButton}"
+                                        Width="38" Height="38" ToolTip="Next Track">
+                                    <Path Data="M 2,2.5 L 10,8 L 2,13.5 Z M 10,2.5 L 18,8 L 10,13.5 Z" Fill="#FFFFFF"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" Margin="1,0,0,0" />
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Apple AirPlay / Audio Output Button (Exact Image 3 Icon) -->
+                            <Button HorizontalAlignment="Right" Command="{Binding ToggleMuteCommand}" Style="{StaticResource HudCircleButton}"
+                                    Width="32" Height="32" ToolTip="Audio Output &amp; Volume">
+                                <Canvas Width="16" Height="16">
+                                    <Path Data="M 2,6 A 6.5,6.5 0 0 1 14,6" Stroke="#8E8E93" StrokeThickness="1.5" StrokeLineJoin="Round" />
+                                    <Path Data="M 4.5,8.5 A 3.8,3.8 0 0 1 11.5,8.5" Stroke="#8E8E93" StrokeThickness="1.5" StrokeLineJoin="Round" />
+                                    <Path Data="M 8,10.5 L 5.5,14 L 10.5,14 Z" Fill="#8E8E93" />
+                                </Canvas>
+                            </Button>
+                        </Grid>
+                    </Grid>
+
+                    <!-- ================= MODE 2: NOTCH NOOK MULTI-WIDGET HUD (IMAGE 2) ================= -->
+                    <Grid Grid.Row="1" Visibility="{Binding IsNotchNookMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                          Margin="2,2,2,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="185" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="110" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: Mini Now Playing Pod -->
+                        <Border Grid.Column="0" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="12"
+                                BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1" Padding="8,6" Margin="0,0,6,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="38" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" Background="#22FFFFFF"
+                                        BorderBrush="#35FFFFFF" BorderThickness="1" ClipToBounds="True">
+                                    <Grid>
+                                        <Image Source="{Binding MediaThumbnail}" Stretch="UniformToFill"
+                                               Visibility="{Binding HasMediaThumbnail, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        <TextBlock Text="🎵" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Visibility="{Binding HasMediaThumbnail, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                    </Grid>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding MediaTitle}" FontWeight="Bold" FontSize="11" Foreground="#FFFFFF"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding MediaArtist}" FontSize="9.5" Foreground="#8E8E93"
+                                               TextTrimming="CharacterEllipsis" Margin="0,1,0,2" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Command="{Binding MediaPrevCommand}" Style="{StaticResource HudCircleButton}" Width="20" Height="20" Margin="0,0,4,0">
+                                            <Path Data="M 5,1 L 1,4 L 5,7 Z M 9,1 L 5,4 L 9,7 Z" Fill="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Button>
+                                        <Button Command="{Binding MediaPlayPauseCommand}" Style="{StaticResource HudCircleButton}" Width="20" Height="20" Margin="0,0,4,0">
+                                            <Grid Width="8" Height="8">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <Border Width="1.75" Height="7" CornerRadius="0.8" Background="#FFFFFF" Margin="0,0,2,0" />
+                                                    <Border Width="1.75" Height="7" CornerRadius="0.8" Background="#FFFFFF" />
+                                                </StackPanel>
+                                                <Path Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                                                      Data="M 0,0 L 6,3.5 L 0,7 Z" Fill="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="1,0,0,0" />
+                                            </Grid>
+                                        </Button>
+                                        <Button Command="{Binding MediaNextCommand}" Style="{StaticResource HudCircleButton}" Width="20" Height="20">
+                                            <Path Data="M 1,1 L 5,4 L 1,7 Z M 5,1 L 9,4 L 5,7 Z" Fill="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Center: Interactive Calendar Day Strip (Exact Image 2 Calendar) -->
+                        <Border Grid.Column="1" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="12"
+                                BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1" Padding="8,4" Margin="0,0,6,0">
+                            <StackPanel VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,3">
+                                    <TextBlock Text="{Binding CurrentMonthName}" FontWeight="Bold" FontSize="12"
+                                               Foreground="{Binding CurrentTheme.AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <ItemsControl ItemsSource="{Binding CalendarDays}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Command="{Binding DataContext.SelectCalendarDayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand" Margin="2,0">
+                                                    <Border Width="28" Height="36" CornerRadius="8" Background="Transparent">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                        <Setter Property="Background" Value="#007AFF" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                            <TextBlock Text="{Binding DayName}" FontSize="8.5" FontWeight="SemiBold" HorizontalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="#8E8E93" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#FFFFFF" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <TextBlock Text="{Binding DayNumber, StringFormat='{}{0:D2}'}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="#C7C7CC" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#FFFFFF" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                                <TextBlock Text="{Binding CalendarStatus}" Foreground="#8E8E93"
+                                           FontSize="9.5" Margin="0,2,0,0" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Right: Live Activity Pod (Image 2) -->
+                        <Border Grid.Column="2" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="12"
+                                BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1" Padding="6,4">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Grid Visibility="{Binding FocusIsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Ellipse Width="32" Height="32" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="2"
+                                             StrokeDashArray="2 1" />
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="🎯" FontSize="9" HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding SatelliteText}" FontSize="8" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Grid>
+                                <StackPanel Visibility="{Binding FocusIsRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding BatteryPercent, StringFormat='⚡ {0}%'}" FontSize="11" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Battery Health" FontSize="9" Foreground="#8E8E93" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                    <TextBlock Text="Active" FontSize="9" Foreground="#34C759" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- ================= MODE 3: CONTROL CENTER & MINI-APPS ================= -->
+                    <Grid Grid.Row="1" Visibility="{Binding IsControlCenterMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Row 0 of Mode 3: Navigation Tab Bar (Frosted Glass) -->
+                        <Border Grid.Row="0" Background="#20FFFFFF" BorderBrush="#35FFFFFF" BorderThickness="1"
+                                CornerRadius="12" Padding="3" Margin="0,0,0,10">
+                        <UniformGrid Rows="1" Columns="8">
+                            <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.QuickControls}"
+                                    Tag="{Binding IsQuickControlsTab}"
+                                    Style="{StaticResource HudTabButton}" ToolTip="Quick Controls &amp; Sliders">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="⚡" FontSize="11" Margin="0,0,2,0" />
+                                    <TextBlock Text="Ctrl" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.SystemActivity}"
+                                    Tag="{Binding IsSystemActivityTab}"
+                                    Style="{StaticResource HudTabButton}" ToolTip="System Telemetry HUD">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="📊" FontSize="11" Margin="0,0,2,0" />
+                                    <TextBlock Text="HUD" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.Clipboard}"
+                                    Tag="{Binding IsClipboardTab}"
+                                    Style="{StaticResource HudTabButton}" ToolTip="Clipboard Manager">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="📋" FontSize="11" Margin="0,0,2,0" />
+                                    <TextBlock Text="Clips" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.Notes}"
+                                    Tag="{Binding IsNotesTab}"
+                                    Style="{StaticResource HudTabButton}" ToolTip="Quick Notes Scratchpad">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="📝" FontSize="11" Margin="0,0,2,0" />
+                                    <TextBlock Text="Notes" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.Calculator}"
+                                    Tag="{Binding IsCalculatorTab}"
+                                    Style="{StaticResource HudTabButton}" ToolTip="Scientific Calculator">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="🧮" FontSize="11" Margin="0,0,2,0" />
+                                    <TextBlock Text="Calc" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.Focus}"
+                                    Tag="{Binding IsFocusTab}"
+                                    Style="{StaticResource HudTabButton}" ToolTip="Focus &amp; Pomodoro Timers">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="⏱️" FontSize="11" Margin="0,0,2,0" />
+                                    <TextBlock Text="Focus" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.AppLauncher}"
+                                    Tag="{Binding IsAppLauncherTab}"
+                                    Style="{StaticResource HudTabButton}" ToolTip="Universal App Launcher &amp; Search">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="🚀" FontSize="11" Margin="0,0,2,0" />
+                                    <TextBlock Text="Apps" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.Settings}"
+                                    Tag="{Binding IsSettingsTab}"
+                                    Style="{StaticResource HudTabButton}" ToolTip="Theme &amp; Island Personalization">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="🎨" FontSize="11" Margin="0,0,2,0" />
+                                    <TextBlock Text="Theme" FontSize="10" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Button>
+                        </UniformGrid>
+                    </Border>
+
+                    <!-- Row 1: Tab Content Views -->
+                    <Grid Grid.Row="1">
+
+                        <!-- TAB 1: QUICK CONTROLS & MEDIA -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      Visibility="{Binding IsQuickControlsTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Margin="0,0,4,0">
+
+                                <!-- Quick Action Tiles Grid (8 Tiles) -->
+                                <UniformGrid Columns="4" Rows="2" Margin="0,0,0,8">
+                                    <!-- 1. Wi-Fi -->
+                                    <Button Command="{Binding WifiCommand}" Style="{StaticResource HudTileButton}" Margin="3">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="📶" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Wi-Fi" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Networks" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- 2. Bluetooth -->
+                                    <Button Command="{Binding BluetoothCommand}" Style="{StaticResource HudTileButton}" Margin="3">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🎧" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Bluetooth" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Devices" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- 3. Dark/Light Theme -->
+                                    <Button Command="{Binding ToggleWindowsThemeCommand}" Style="{StaticResource HudTileButton}" Margin="3">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🌙" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Theme" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Dark/Light" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- 4. Night Light -->
+                                    <Button Command="{Binding NightLightCommand}" Style="{StaticResource HudTileButton}" Margin="3">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="💡" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Night Light" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Display" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- 5. Screenshot -->
+                                    <Button Command="{Binding ScreenshotCommand}" Style="{StaticResource HudTileButton}" Margin="3">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="📸" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Capture" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Snip Tool" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- 6. Screen Record -->
+                                    <Button Command="{Binding ScreenRecordCommand}" Style="{StaticResource HudTileButton}" Margin="3">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🎥" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Record" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Game Bar" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- 7. Battery Saver -->
+                                    <Button Command="{Binding BatterySaverCommand}" Style="{StaticResource HudTileButton}" Margin="3">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🔋" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Battery" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Saver Mode" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- 8. Lock Screen -->
+                                    <Button Command="{Binding LockScreenCommand}" Style="{StaticResource HudTileButton}" Margin="3">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🛡️" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Lock" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Workstation" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+                                </UniformGrid>
+
+                                <!-- Hardware Sliders Card -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}"
+                                        CornerRadius="12" Padding="14,10" Margin="0,0,0,8"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <!-- Volume Slider -->
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="42" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Grid.Column="0" Command="{Binding ToggleMuteCommand}"
+                                                    Style="{StaticResource HudCircleButton}" Width="28" Height="28" Margin="0,0,10,0" ToolTip="Toggle Mute">
+                                                <TextBlock Text="{Binding VolumeIcon}" FontSize="13" />
+                                            </Button>
+                                            <Slider Grid.Column="1" Style="{StaticResource HudSlider}"
+                                                    Minimum="0" Maximum="1" Value="{Binding MasterVolume, Mode=TwoWay}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="2" Text="{Binding VolumePercent, StringFormat='{}{0}%'}"
+                                                       Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontWeight="Bold" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <!-- Brightness Slider -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="42" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0">
+                                                <TextBlock Text="☀️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Slider Grid.Column="1" Style="{StaticResource HudSlider}"
+                                                    Minimum="0" Maximum="100" Value="{Binding BrightnessPercent, Mode=TwoWay}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="2" Text="{Binding BrightnessPercent, StringFormat='{}{0}%'}"
+                                                       Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontWeight="Bold" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Media Player Card -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}"
+                                        CornerRadius="12" Padding="12,10"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="42" Height="42" CornerRadius="8" ClipToBounds="True"
+                                                Background="#162030" BorderBrush="{Binding CurrentTheme.AccentBrush}" BorderThickness="1.2" Margin="0,0,12,0">
+                                            <Grid>
+                                                <Image Source="{Binding Media.Thumbnail}" Stretch="UniformToFill"
+                                                       Visibility="{Binding Media.Thumbnail, Converter={StaticResource NullToVisibilityConverter}}" />
+                                                <TextBlock Text="🎵" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding Media.Thumbnail, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}" />
+                                            </Grid>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Media.Title}" MaxWidth="240" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontWeight="Bold" FontSize="12" />
+                                            <TextBlock Text="{Binding Media.Artist}" MaxWidth="240" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" Margin="0,2,0,4" />
+                                            <StackPanel Orientation="Horizontal" Height="14" VerticalAlignment="Center"
+                                                        Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Border Width="3" Height="{Binding EqBar1}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                                <Border Width="3" Height="{Binding EqBar2}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                                <Border Width="3" Height="{Binding EqBar3}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                                <Border Width="3" Height="{Binding EqBar4}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                                <Border Width="3" Height="{Binding EqBar5}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                                <Border Width="3" Height="{Binding EqBar6}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.5" Margin="1.5,0" VerticalAlignment="Bottom" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Command="{Binding MediaPrevCommand}" Style="{StaticResource HudCircleButton}" Width="28" Height="28" Margin="0,0,6,0">
+                                                <Path Data="M 7,2 L 1,6 L 7,10 Z M 13,2 L 7,6 L 13,10 Z" Fill="{Binding CurrentTheme.TextPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Button>
+                                            <Button Command="{Binding MediaPlayPauseCommand}" Style="{StaticResource HudCircleButton}" Width="34" Height="34" Margin="0,0,6,0"
+                                                    BorderBrush="{Binding CurrentTheme.AccentBrush}">
+                                                <Grid Width="12" Height="12">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <Border Width="2.5" Height="10" CornerRadius="1.25" Background="{Binding CurrentTheme.AccentBrush}" Margin="0,0,3,0" />
+                                                        <Border Width="2.5" Height="10" CornerRadius="1.25" Background="{Binding CurrentTheme.AccentBrush}" />
+                                                    </StackPanel>
+                                                    <Path Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                                                          Data="M 0,0 L 9,5 L 0,10 Z" Fill="{Binding CurrentTheme.AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="1.5,0,0,0" />
+                                                </Grid>
+                                            </Button>
+                                            <Button Command="{Binding MediaNextCommand}" Style="{StaticResource HudCircleButton}" Width="28" Height="28">
+                                                <Path Data="M 1,2 L 7,6 L 1,10 Z M 7,2 L 13,6 L 7,10 Z" Fill="{Binding CurrentTheme.TextPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- TAB 2: SYSTEM TELEMETRY & NOTIFICATIONS -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      Visibility="{Binding IsSystemActivityTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Margin="0,0,4,0">
+
+                                <!-- CPU & RAM Grid -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- CPU Card -->
+                                    <Border Grid.Column="0" Background="{Binding CurrentTheme.CardGradient}"
+                                            CornerRadius="12" Padding="12,10" Margin="0,0,4,0"
+                                            BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                        <StackPanel>
+                                            <Grid>
+                                                <TextBlock Text="⚡ PROCESSOR" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" FontWeight="Bold" />
+                                                <TextBlock Text="{Binding CpuPercent, StringFormat='{}{0}%'}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                           FontWeight="Bold" FontSize="15" HorizontalAlignment="Right" />
+                                            </Grid>
+                                            <ProgressBar Style="{StaticResource HudProgressBar}" Value="{Binding CpuPercent, Mode=OneWay}" Maximum="100" Margin="0,6,0,6"
+                                                         Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                            <TextBlock Text="Ryzen 3 7320U Active" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="9" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- RAM Card -->
+                                    <Border Grid.Column="1" Background="{Binding CurrentTheme.CardGradient}"
+                                            CornerRadius="12" Padding="12,10" Margin="4,0,0,0"
+                                            BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                        <StackPanel>
+                                            <Grid>
+                                                <TextBlock Text="🧠 MEMORY" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" FontWeight="Bold" />
+                                                <TextBlock Text="{Binding RamPercent, StringFormat='{}{0}%'}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                           FontWeight="Bold" FontSize="15" HorizontalAlignment="Right" />
+                                            </Grid>
+                                            <ProgressBar Style="{StaticResource HudProgressBar}" Value="{Binding RamPercent, Mode=OneWay}" Maximum="100" Margin="0,6,0,6"
+                                                         Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                            <TextBlock Text="{Binding RamDetails}" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="9" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Network Activity & Disk Usage Grid -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Network Card -->
+                                    <Border Grid.Column="0" Background="{Binding CurrentTheme.CardGradient}"
+                                            CornerRadius="12" Padding="12,10" Margin="0,0,4,0"
+                                            BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="🌐 NETWORK SPEED" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" FontWeight="Bold" />
+                                            <TextBlock Text="{Binding NetworkSpeedText}" Foreground="{Binding CurrentTheme.TextPrimaryBrush}"
+                                                       FontWeight="Bold" FontSize="12" Margin="0,6,0,4" />
+                                            <TextBlock Text="Windows IPv4 Traffic Active" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="9" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Disk Card -->
+                                    <Border Grid.Column="1" Background="{Binding CurrentTheme.CardGradient}"
+                                            CornerRadius="12" Padding="12,10" Margin="4,0,0,0"
+                                            BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                        <StackPanel>
+                                            <Grid>
+                                                <TextBlock Text="💾 STORAGE (C:)" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" FontWeight="Bold" />
+                                                <TextBlock Text="{Binding DiskPercent, StringFormat='{}{0}%'}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                           FontWeight="Bold" FontSize="12" HorizontalAlignment="Right" />
+                                            </Grid>
+                                            <ProgressBar Style="{StaticResource HudProgressBar}" Value="{Binding DiskPercent, Mode=OneWay}" Maximum="100" Margin="0,6,0,6"
+                                                         Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                            <TextBlock Text="{Binding DiskDetails}" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="9" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Notification & Apple Satellite Simulator Card -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}"
+                                        CornerRadius="12" Padding="14,10"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="🔔 NOTIFICATION &amp; SATELLITE DISPATCH" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                       FontWeight="Bold" FontSize="11" />
+                                            <TextBlock Text="Test live Apple Dynamic Island alerts &amp; secondary satellite bubble"
+                                                       Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Command="{Binding TestNotificationCommand}"
+                                                Style="{StaticResource HudPillButton}" Margin="0,0,6,0" Padding="10,5">
+                                            <TextBlock Text="Trigger Alert ✦" FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                        </Button>
+                                        <Button Grid.Column="2" Command="{Binding ToggleTestSatelliteCommand}"
+                                                Style="{StaticResource HudPillButton}" Padding="10,5">
+                                            <TextBlock Text="{Binding TestSatelliteStatusText}" FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- TAB 3: CLIPBOARD MANAGER -->
+                        <Grid Visibility="{Binding IsClipboardTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Header / Search / Clear -->
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ClipboardSearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource HudTextBox}" Margin="0,0,8,0" Padding="8,5" />
+                                <Button Grid.Column="1" Command="{Binding ClearClipboardHistoryCommand}"
+                                        Style="{StaticResource HudPillButton}" Padding="10,5" ToolTip="Clear unpinned clips">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🧹 " FontSize="10" />
+                                        <TextBlock Text="Clear Unpinned" FontSize="10" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <!-- Clipboard Items List -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding ClipboardView}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.CardGradient}"
+                                                    BorderBrush="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.BorderBrush}"
+                                                    BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <!-- Pin button -->
+                                                    <Button Grid.Column="0" Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TogglePinClipboardCommand}"
+                                                            CommandParameter="{Binding}" Style="{StaticResource HudCircleButton}" Width="24" Height="24" Margin="0,0,8,0"
+                                                            ToolTip="Pin to Top">
+                                                        <TextBlock Text="📌" FontSize="11" />
+                                                    </Button>
+
+                                                    <!-- Text snippet (clickable to copy) -->
+                                                    <Button Grid.Column="1" Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CopyClipboardItemCommand}"
+                                                            CommandParameter="{Binding}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                                            Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Click to Copy">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Text}" MaxHeight="34" TextTrimming="CharacterEllipsis" TextWrapping="Wrap"
+                                                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextPrimaryBrush}"
+                                                                       FontSize="11" FontFamily="Consolas, Segoe UI Variable, sans-serif" />
+                                                            <TextBlock Text="{Binding CopiedAt, StringFormat='{}{0:HH:mm:ss  •  MMM dd}'}"
+                                                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextSecondaryBrush}"
+                                                                       FontSize="9" Margin="0,3,0,0" />
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <!-- Delete button -->
+                                                    <Button Grid.Column="2" Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteClipboardItemCommand}"
+                                                            CommandParameter="{Binding}" Style="{StaticResource HudCircleButton}" Width="24" Height="24" Margin="8,0,0,0" ToolTip="Delete entry">
+                                                        <TextBlock Text="✕" FontSize="10" Foreground="#EF4444" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <!-- TAB 4: QUICK NOTES -->
+                        <Grid Visibility="{Binding IsNotesTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left: Notes List & Controls -->
+                            <Grid Grid.Column="0" Margin="0,0,8,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <Button Grid.Row="0" Command="{Binding NewNoteCommand}" Style="{StaticResource HudPillButton}"
+                                        HorizontalAlignment="Stretch" Padding="8,6" Margin="0,0,0,6">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="＋ " FontWeight="Bold" FontSize="12" />
+                                        <TextBlock Text="New Note" FontWeight="Bold" FontSize="11" />
+                                    </StackPanel>
+                                </Button>
+
+                                <TextBox Grid.Row="1" Text="{Binding NotesSearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource HudTextBox}" Margin="0,0,0,6" Padding="6,4" FontSize="11" />
+
+                                <ListBox Grid.Row="2" ItemsSource="{Binding NotesView}" SelectedItem="{Binding SelectedNote}"
+                                         Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.CardGradient}"
+                                                    BorderBrush="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.BorderBrush}"
+                                                    BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="0,0,0,4">
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="11"
+                                                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextPrimaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis" MaxWidth="130" />
+                                                        <TextBlock Text="📌" FontSize="9" HorizontalAlignment="Right"
+                                                                   Visibility="{Binding IsPinned, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM dd, HH:mm}'}"
+                                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextSecondaryBrush}"
+                                                               FontSize="9" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+
+                            <!-- Right: Active Note Editor -->
+                            <Border Grid.Column="1" Background="{Binding CurrentTheme.CardGradient}"
+                                    BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1"
+                                    CornerRadius="10" Padding="10">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Title & Toolbar -->
+                                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" Text="{Binding SelectedNoteTitle, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource HudTextBox}" FontWeight="Bold" FontSize="12" Margin="0,0,6,0" />
+                                        <Button Grid.Column="1" Command="{Binding TogglePinNoteCommand}" Style="{StaticResource HudCircleButton}"
+                                                Width="26" Height="26" Margin="0,0,4,0" ToolTip="Toggle Pin">
+                                            <TextBlock Text="📌" FontSize="11" />
+                                        </Button>
+                                        <Button Grid.Column="2" Command="{Binding DeleteNoteCommand}" Style="{StaticResource HudCircleButton}"
+                                                Width="26" Height="26" ToolTip="Delete Note">
+                                            <TextBlock Text="🗑️" FontSize="11" />
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Content Area -->
+                                    <TextBox Grid.Row="1" Text="{Binding SelectedNoteContent, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource HudTextBox}" AcceptsReturn="True" TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto" FontSize="12" FontFamily="Segoe UI Variable, Segoe UI, sans-serif" />
+
+                                    <!-- Footer status -->
+                                    <TextBlock Grid.Row="2" Text="⚡ Autosaved to disk • Instant persistence"
+                                               Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="9" Margin="0,6,0,0" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- TAB 5: SCIENTIFIC CALCULATOR -->
+                        <Grid Visibility="{Binding IsCalculatorTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Calculator Display Screen -->
+                            <Border Grid.Row="0" Background="{Binding CurrentTheme.CardGradient}"
+                                    BorderBrush="{Binding CurrentTheme.AccentBrush}" BorderThickness="1.2"
+                                    CornerRadius="10" Padding="14,10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding CalcExpression, TargetNullValue=''}" Foreground="{Binding CurrentTheme.TextSecondaryBrush}"
+                                               FontSize="13" TextAlignment="Right" FontFamily="Consolas, Segoe UI" TextTrimming="CharacterEllipsis" MinHeight="18" />
+                                    <TextBlock Text="{Binding CalcResult, FallbackValue='0'}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                               FontWeight="Bold" FontSize="26" TextAlignment="Right" FontFamily="Consolas, Segoe UI" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Keypad Grid (5 rows x 6 columns) -->
+                            <UniformGrid Grid.Row="1" Rows="5" Columns="6">
+                                <!-- Row 1 -->
+                                <Button Command="{Binding CalcClearCommand}" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text="C" FontWeight="Bold" />
+                                </Button>
+                                <Button Command="{Binding CalcBackspaceCommand}" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text="⌫" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="(" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text="(" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter=")" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text=")" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="%" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text="%" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="÷" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text="÷" FontWeight="Bold" />
+                                </Button>
+
+                                <!-- Row 2 -->
+                                <Button Command="{Binding CalcFunctionCommand}" CommandParameter="sin" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="sin" FontSize="11" />
+                                </Button>
+                                <Button Command="{Binding CalcFunctionCommand}" CommandParameter="cos" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="cos" FontSize="11" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="7" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="7" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="8" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="8" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="9" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="9" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="×" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text="×" FontWeight="Bold" />
+                                </Button>
+
+                                <!-- Row 3 -->
+                                <Button Command="{Binding CalcFunctionCommand}" CommandParameter="tan" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="tan" FontSize="11" />
+                                </Button>
+                                <Button Command="{Binding CalcFunctionCommand}" CommandParameter="sqrt" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="√" FontSize="13" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="4" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="4" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="5" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="5" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="6" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="6" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="-" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text="−" FontWeight="Bold" />
+                                </Button>
+
+                                <!-- Row 4 -->
+                                <Button Command="{Binding CalcFunctionCommand}" CommandParameter="log" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="log" FontSize="11" />
+                                </Button>
+                                <Button Command="{Binding CalcFunctionCommand}" CommandParameter="ln" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="ln" FontSize="11" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="1" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="1" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="2" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="2" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="3" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="3" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="+" Style="{StaticResource HudCalcOperatorButton}">
+                                    <TextBlock Text="+" FontWeight="Bold" />
+                                </Button>
+
+                                <!-- Row 5 -->
+                                <Button Command="{Binding CalcFunctionCommand}" CommandParameter="sq" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="x²" FontSize="11" />
+                                </Button>
+                                <Button Command="{Binding CalcFunctionCommand}" CommandParameter="inv" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="1/x" FontSize="11" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="0" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="0" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="." Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="." FontWeight="Bold" />
+                                </Button>
+                                <Button Command="{Binding CalcInputCharCommand}" CommandParameter="π" Style="{StaticResource HudCalcButton}">
+                                    <TextBlock Text="π" />
+                                </Button>
+                                <Button Command="{Binding CalcEqualsCommand}" Style="{StaticResource HudCalcEqualsButton}">
+                                    <TextBlock Text="=" FontSize="16" />
+                                </Button>
+                            </UniformGrid>
+                        </Grid>
+
+                        <!-- TAB 6: FOCUS & POMODORO TIMERS -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      Visibility="{Binding IsFocusTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Margin="0,0,4,0">
+
+                                <!-- Mode Selection Strip -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}" CornerRadius="10" Padding="4" Margin="0,0,0,8"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <UniformGrid Rows="1" Columns="4">
+                                        <Button Command="{Binding FocusSelectTypeCommand}" CommandParameter="{x:Static services:FocusType.PomodoroFocus}"
+                                                Style="{StaticResource HudPillButton}" Margin="2">
+                                            <TextBlock Text="🎯 Focus (25m)" FontSize="10" FontWeight="SemiBold" />
+                                        </Button>
+                                        <Button Command="{Binding FocusSelectTypeCommand}" CommandParameter="{x:Static services:FocusType.PomodoroShortBreak}"
+                                                Style="{StaticResource HudPillButton}" Margin="2">
+                                            <TextBlock Text="☕ Short Break" FontSize="10" FontWeight="SemiBold" />
+                                        </Button>
+                                        <Button Command="{Binding FocusSelectTypeCommand}" CommandParameter="{x:Static services:FocusType.PomodoroLongBreak}"
+                                                Style="{StaticResource HudPillButton}" Margin="2">
+                                            <TextBlock Text="🛋️ Long Break" FontSize="10" FontWeight="SemiBold" />
+                                        </Button>
+                                        <Button Command="{Binding FocusSelectTypeCommand}" CommandParameter="{x:Static services:FocusType.Stopwatch}"
+                                                Style="{StaticResource HudPillButton}" Margin="2">
+                                            <TextBlock Text="⏱️ Stopwatch" FontSize="10" FontWeight="SemiBold" />
+                                        </Button>
+                                    </UniformGrid>
+                                </Border>
+
+                                <!-- Main Digital HUD Timer Card -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}" CornerRadius="12" Padding="20,16" Margin="0,0,0,8"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding FocusModeTitle}" Foreground="{Binding CurrentTheme.TextSecondaryBrush}"
+                                                   FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,6" />
+
+                                        <!-- Digital Time Display -->
+                                        <TextBlock Text="{Binding FocusDisplayText}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                   FontSize="46" FontWeight="Bold" FontFamily="Consolas, Segoe UI" HorizontalAlignment="Center"
+                                                   Effect="{StaticResource SubtleGlowEffect}" />
+
+                                        <!-- Glowing Progress Bar -->
+                                        <ProgressBar Style="{StaticResource HudProgressBar}" Value="{Binding FocusProgressPercent, Mode=OneWay}"
+                                                     Maximum="100" Width="380" Height="8" Margin="0,12,0,16"
+                                                     Foreground="{Binding CurrentTheme.AccentBrush}" />
+
+                                        <!-- Action Controls -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Command="{Binding FocusToggleCommand}" Style="{StaticResource HudPillButton}"
+                                                    Padding="22,8" Margin="0,0,10,0" BorderBrush="{Binding CurrentTheme.AccentBrush}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding FocusButtonGlyph}" FontSize="13" Margin="0,0,6,0" />
+                                                    <TextBlock Text="{Binding FocusButtonText}" FontSize="12" FontWeight="Bold"
+                                                               Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding FocusResetCommand}" Style="{StaticResource HudPillButton}" Padding="16,8">
+                                                <TextBlock Text="Reset ↺" FontSize="11" FontWeight="SemiBold" />
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Duration Adjuster & Today's Stats -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Custom Duration Pills -->
+                                    <Border Grid.Column="0" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="10" Padding="12,10" Margin="0,0,4,0"
+                                            BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="⏱️ CUSTOM TIMER MINUTES" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,6" />
+                                            <WrapPanel HorizontalAlignment="Center">
+                                                <Button Command="{Binding FocusSetDurationCommand}" CommandParameter="5" Style="{StaticResource HudPillButton}" Margin="2" Padding="8,4">
+                                                    <TextBlock Text="5m" FontSize="10" />
+                                                </Button>
+                                                <Button Command="{Binding FocusSetDurationCommand}" CommandParameter="10" Style="{StaticResource HudPillButton}" Margin="2" Padding="8,4">
+                                                    <TextBlock Text="10m" FontSize="10" />
+                                                </Button>
+                                                <Button Command="{Binding FocusSetDurationCommand}" CommandParameter="15" Style="{StaticResource HudPillButton}" Margin="2" Padding="8,4">
+                                                    <TextBlock Text="15m" FontSize="10" />
+                                                </Button>
+                                                <Button Command="{Binding FocusSetDurationCommand}" CommandParameter="30" Style="{StaticResource HudPillButton}" Margin="2" Padding="8,4">
+                                                    <TextBlock Text="30m" FontSize="10" />
+                                                </Button>
+                                                <Button Command="{Binding FocusSetDurationCommand}" CommandParameter="45" Style="{StaticResource HudPillButton}" Margin="2" Padding="8,4">
+                                                    <TextBlock Text="45m" FontSize="10" />
+                                                </Button>
+                                                <Button Command="{Binding FocusSetDurationCommand}" CommandParameter="60" Style="{StaticResource HudPillButton}" Margin="2" Padding="8,4">
+                                                    <TextBlock Text="60m" FontSize="10" />
+                                                </Button>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Stats Card -->
+                                    <Border Grid.Column="1" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="10" Padding="12,10" Margin="4,0,0,0"
+                                            BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="🏆 TODAY'S PRODUCTIVITY" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,6" />
+                                            <Grid Margin="0,2,0,4">
+                                                <TextBlock Text="Sessions Completed" Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding FocusSessionsCompleted}" Foreground="{Binding CurrentTheme.AccentBrush}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Right" />
+                                            </Grid>
+                                            <Grid>
+                                                <TextBlock Text="Total Focus Time" Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding FocusTotalMinutes, StringFormat='{}{0} mins'}" Foreground="{Binding CurrentTheme.AccentBrush}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- TAB 7: APP LAUNCHER & SEARCH -->
+                        <Grid Visibility="{Binding IsAppLauncherTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Universal Search Bar -->
+                            <Border Grid.Row="0" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="10" Padding="10,8" Margin="0,0,0,8"
+                                    BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="🔍" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBox Grid.Column="1" Text="{Binding AppSearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource HudTextBox}" FontSize="12" Padding="6,4" VerticalAlignment="Center" />
+                                    <Button Grid.Column="2" Command="{Binding ExecuteSearchCommand}" Style="{StaticResource HudPillButton}"
+                                            Padding="12,5" Margin="8,0,0,0" ToolTip="Execute Search or Command">
+                                        <TextBlock Text="Launch ↵" FontSize="11" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Apps Shortcuts Grid -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding AppsView}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="3" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.CardGradient}"
+                                                    BorderBrush="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.BorderBrush}"
+                                                    BorderThickness="1" CornerRadius="10" Padding="10,12" Margin="4">
+                                                <Button Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.LaunchAppCommand}"
+                                                        CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                    <StackPanel HorizontalAlignment="Center">
+                                                        <TextBlock Text="{Binding IconGlyph}" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="11"
+                                                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextPrimaryBrush}"
+                                                                   HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Path}" FontSize="9"
+                                                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextSecondaryBrush}"
+                                                                   HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="120" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <!-- TAB 8: PERSONALIZATION & THEMES -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                      Visibility="{Binding IsSettingsTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Margin="0,0,4,0">
+
+                                <!-- Theme Selection Card -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}"
+                                        CornerRadius="12" Padding="14,12" Margin="0,0,0,8"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="🎨 PERSONALIZATION THEMES" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                       FontWeight="Bold" FontSize="11" />
+                                            <TextBlock Grid.Column="1" Text="{Binding ActiveThemeName, StringFormat='Active: {0}'}"
+                                                       Foreground="{Binding CurrentTheme.TextAccentBrush}" FontSize="10" FontWeight="SemiBold" />
+                                        </Grid>
+
+                                        <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.MidnightOLED}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#FFFFFF" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Midnight OLED" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.CyberpunkCyan}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#00F0FF" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Cyberpunk Cyan" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.AppleMinimal}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#0A84FF" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Apple Minimal" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.NeonBlue}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#3B82F6" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Neon Blue" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.Crimson}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#EF4444" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Crimson Red" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.Aurora}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#A855F7" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Aurora Purple" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.MatrixEmerald}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#10B981" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Matrix Emerald" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.AmberGold}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#F59E0B" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Amber Gold" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding ChangeThemeCommand}" CommandParameter="{x:Static core:ThemePreset.SynthwaveMagenta}"
+                                                    Style="{StaticResource HudPillButton}" Margin="4,3" Padding="10,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#EC4899" Margin="0,0,6,0" />
+                                                    <TextBlock Text="Synthwave" FontSize="11" />
+                                                </StackPanel>
+                                            </Button>
+                                        </WrapPanel>
+
+                                        <!-- Custom Hex Accent Picker (Frosted Glass) -->
+                                        <Border Margin="0,10,0,0" Padding="10,6" Background="#18FFFFFF" BorderBrush="#30FFFFFF" BorderThickness="1" CornerRadius="8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="Custom Hex:" Foreground="{Binding CurrentTheme.TextSecondaryBrush}"
+                                                           FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                <TextBox Grid.Column="1" Text="{Binding CustomAccentHex, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource HudTextBox}" FontSize="11" Padding="6,3" VerticalAlignment="Center" />
+                                                <Button Grid.Column="2" Command="{Binding ApplyCustomAccentCommand}" Style="{StaticResource HudPillButton}"
+                                                        Padding="10,4" Margin="6,0,0,0">
+                                                    <TextBlock Text="Apply Accent ✦" FontSize="10" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Appearance & Scale Card -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}"
+                                        CornerRadius="12" Padding="14,10" Margin="0,0,0,8"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="📐 ISLAND GEOMETRY &amp; TRANSPARENCY" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                   FontWeight="Bold" FontSize="11" Margin="0,0,0,8" />
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="50" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Island Scale" Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                                            <Slider Grid.Column="1" Minimum="0.8" Maximum="1.25" Value="{Binding IslandScale, Mode=TwoWay}" Style="{StaticResource HudSlider}" />
+                                            <TextBlock Grid.Column="2" Text="{Binding IslandScale, StringFormat='{}{0:0.00}x'}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                       FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="50" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Opacity" Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                                            <Slider Grid.Column="1" Minimum="0.70" Maximum="1.0" Value="{Binding IslandOpacity, Mode=TwoWay}" Style="{StaticResource HudSlider}" />
+                                            <TextBlock Grid.Column="2" Text="{Binding IslandOpacity, StringFormat='{}{0:P0}'}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                       FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- System Startup & Audio Integration Card -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}"
+                                        CornerRadius="12" Padding="14,10"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="⚙️ SYSTEM INTEGRATION" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                       FontWeight="Bold" FontSize="11" />
+                                            <TextBlock Text="Boot startup — Audio cues — Auto-collapse — Satellite bubble"
+                                                       Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="1" Command="{Binding ToggleLaunchOnStartupCommand}"
+                                                Style="{StaticResource HudPillButton}" Margin="0,0,6,0" Padding="8,5" ToolTip="Start when Windows turns on">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🚀 " FontSize="10" />
+                                                <TextBlock Text="{Binding StartupStatusText}" FontSize="10" FontWeight="SemiBold" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Grid.Column="2" Command="{Binding ToggleSoundEffectsCommand}"
+                                                Style="{StaticResource HudPillButton}" Margin="0,0,6,0" Padding="8,5" ToolTip="Toggle sound effects">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🔊 " FontSize="10" />
+                                                <TextBlock Text="{Binding SoundStatusText}" FontSize="10" FontWeight="SemiBold" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Grid.Column="3" Command="{Binding ToggleTestSatelliteCommand}"
+                                                Style="{StaticResource HudPillButton}" Margin="0,0,6,0" Padding="8,5" ToolTip="Preview Apple Satellite Multi-task Bubble">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="✦ " FontSize="10" />
+                                                <TextBlock Text="{Binding TestSatelliteStatusText}" FontSize="10" FontWeight="SemiBold" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Grid.Column="4" Command="{Binding ResetPositionCommand}"
+                                                Style="{StaticResource HudPillButton}" Padding="8,5" ToolTip="Reset to screen center">
+                                            <TextBlock Text="⌖ Center" FontSize="10" FontWeight="Bold"
+                                                       Foreground="{Binding CurrentTheme.TextPrimaryBrush}" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Power & System Lifecycle Card (Frosted Ruby Glass) -->
+                                <Border Background="#20FF453A"
+                                        CornerRadius="12" Padding="14,10" Margin="0,8,0,0"
+                                        BorderBrush="#55FF453A" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="⏻ POWER &amp; APPLICATION LIFECYCLE" Foreground="#FF453A"
+                                                       FontWeight="Bold" FontSize="11" />
+                                            <TextBlock Text="Turn off Nexus Island completely or toggle ambient glow &amp; silent mode"
+                                                       Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- Ambient Glow Toggle -->
+                                        <Button Grid.Column="1" Command="{Binding ToggleAmbientGlowCommand}"
+                                                Style="{StaticResource HudPillButton}" Margin="0,0,8,0" Padding="10,6"
+                                                ToolTip="Toggle Apple Ambient Bloom Glow">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="✨ " FontSize="10" />
+                                                <TextBlock Text="{Binding AmbientGlowStatusText}" FontSize="10.5" FontWeight="SemiBold" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Turn Off Island Button -->
+                                        <Button Grid.Column="2" Command="{Binding ExitAppCommand}"
+                                                Background="#FF453A" BorderBrush="#FF453A" BorderThickness="1"
+                                                Style="{StaticResource HudPillButton}" Padding="14,6"
+                                                ToolTip="Turn off Nexus Island completely and exit application">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="⏻ " FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" />
+                                                <TextBlock Text="Turn Off Island" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                    </Grid>
+
+                    <!-- Row 2: Footer -->
+                    <Grid Grid.Row="2" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="✦ NEXUS ISLAND — Master Windows 11 Companion — Apple Liquid Morph — Satellite HUD"
+                                   Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" VerticalAlignment="Center" />
+
+                        <Button Grid.Column="1" Command="{Binding CollapseCommand}"
+                                Style="{StaticResource HudPillButton}" Padding="14,4">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Collapse to Pill ⌃" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{Binding CurrentTheme.AccentBrush}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Grid>
+                </Grid>
+
+            </Grid>
+        </Border>
+
+        <!-- Detached Satellite Anchor Canvas (Center Pinned at Island Center) -->
+        <Canvas HorizontalAlignment="Center" VerticalAlignment="Top" Width="0" Height="0" ClipToBounds="False">
+            <Border x:Name="SatelliteBubble"
+                    Canvas.Left="150" Canvas.Top="0"
+                    Width="44" Height="44"
+                    CornerRadius="22"
+                    Cursor="Hand"
+                    RenderTransformOrigin="0.5, 0.5"
+                    Background="{Binding CurrentTheme.BackgroundGradient}"
+                    BorderBrush="{Binding CurrentTheme.BorderGradient}"
+                    BorderThickness="1.5"
+                    Effect="{StaticResource IslandShadow}"
+                    Visibility="{Binding IsSatelliteVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    PreviewMouseDown="SatelliteBubble_PreviewMouseDown"
+                    MouseEnter="SatelliteBubble_MouseEnter"
+                    MouseLeave="SatelliteBubble_MouseLeave"
+                    ToolTip="Secondary Activity • Tap to Open">
+                <Border.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="SatelliteScale" ScaleX="1.0" ScaleY="1.0" />
+                        <TranslateTransform x:Name="SatelliteTranslate" X="0" Y="0" />
+                    </TransformGroup>
+                </Border.RenderTransform>
+                <Grid>
+                    <!-- Specular Chamfer Arc -->
+                    <Ellipse Margin="2" Stroke="{Binding CurrentTheme.BorderBrush}" StrokeThickness="1.5" />
+                    <!-- Rotating Glowing Neon Dash Arc -->
+                    <Ellipse Margin="2" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="2"
+                             StrokeDashArray="2 1.5" Opacity="0.9">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="SatRingRotate" Angle="0" CenterX="19" CenterY="19" />
+                        </Ellipse.RenderTransform>
+                        <Ellipse.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation Storyboard.TargetName="SatRingRotate"
+                                                         Storyboard.TargetProperty="Angle"
+                                                         From="0" To="360" Duration="0:0:6" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Ellipse.Triggers>
+                    </Ellipse>
+
+                    <!-- Center Icon & Text -->
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SatelliteIcon}" FontSize="12" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding SatelliteText}" FontSize="8" FontWeight="Bold"
+                                   Foreground="{Binding CurrentTheme.AccentBrush}"
+                                   HorizontalAlignment="Center" Margin="0,1,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Canvas>
+
+    </Grid>
+</Window>

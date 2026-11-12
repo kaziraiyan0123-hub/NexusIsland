@@ -1,0 +1,407 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:conv="clr-namespace:NexusIsland.Converters">
+
+    <!-- Value Converters -->
+    <conv:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <conv:InverseBoolToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+    <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    <conv:BatteryWidthConverter x:Key="BatteryWidthConverter" />
+    <conv:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
+    <conv:AudioPeakToHeightConverter x:Key="AudioPeakToHeightConverter" />
+
+    <!-- Common Sci-Fi HUD Brushes -->
+    <SolidColorBrush x:Key="IslandBgBrush" Color="#EE090B10" />
+    <SolidColorBrush x:Key="IslandCardBrush" Color="#331A202C" />
+    <SolidColorBrush x:Key="IslandBorderBrush" Color="#442D3748" />
+    <SolidColorBrush x:Key="IslandTextPrimary" Color="#F7FAFC" />
+    <SolidColorBrush x:Key="IslandTextSecondary" Color="#A0AEC0" />
+    <SolidColorBrush x:Key="IslandTextMuted" Color="#718096" />
+    <SolidColorBrush x:Key="IslandAccentCyan" Color="#00F0FF" />
+    <SolidColorBrush x:Key="IslandGlowCyan" Color="#6600F0FF" />
+    <SolidColorBrush x:Key="IslandDangerRed" Color="#EF4444" />
+    <SolidColorBrush x:Key="IslandSuccessGreen" Color="#10B981" />
+
+    <!-- Refined Apple Soft Drop Shadows -->
+    <DropShadowEffect x:Key="IslandShadow" BlurRadius="38" ShadowDepth="8" Direction="270" Color="#000000" Opacity="0.55" />
+    <DropShadowEffect x:Key="AppleButtonShadow" BlurRadius="12" ShadowDepth="3" Direction="270" Color="#000000" Opacity="0.35" />
+    <DropShadowEffect x:Key="SubtleGlowEffect" BlurRadius="8" ShadowDepth="0" Color="#007AFF" Opacity="0.45" />
+
+    <!-- Apple Circular Dark Glass Button Style -->
+    <Style x:Key="HudCircleButton" TargetType="Button">
+        <Setter Property="Background" Value="#22FFFFFF" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#35FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="RenderTransformOrigin" Value="0.5, 0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="16">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#3DFFFFFF" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#65FFFFFF" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#15FFFFFF" />
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.93" ScaleY="0.93" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Iconic Apple Solid White Circular Play/Pause Button (Image 3) -->
+    <Style x:Key="ApplePlayPauseButton" TargetType="Button">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#000000" />
+        <Setter Property="BorderBrush" Value="#E5E5EA" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="42" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="Effect" Value="{StaticResource AppleButtonShadow}" />
+        <Setter Property="RenderTransformOrigin" Value="0.5, 0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="21">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#EBEBF0" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#D1D1D6" />
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.93" ScaleY="0.93" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Apple Frosted Glass Pill Button -->
+    <Style x:Key="HudPillButton" TargetType="Button">
+        <Setter Property="Background" Value="#1EFFFFFF" />
+        <Setter Property="Foreground" Value="#E5E5EA" />
+        <Setter Property="BorderBrush" Value="#30FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="RenderTransformOrigin" Value="0.5, 0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="13" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#38FFFFFF" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#60FFFFFF" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#14FFFFFF" />
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Apple Segmented Tab Button with Frosted Highlight -->
+    <Style x:Key="HudTabButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#8E8E93" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="6,4" />
+        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="RenderTransformOrigin" Value="0.5, 0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Active Selected State via Tag="True" (Apple Frosted Glass Capsule) -->
+                        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#38FFFFFF" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#65FFFFFF" />
+                            <Setter TargetName="border" Property="BorderThickness" Value="1" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
+                            <Setter Property="FontWeight" Value="Bold" />
+                        </DataTrigger>
+                        <!-- Hover State -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="border" Property="Background" Value="#22FFFFFF" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
+                        </MultiDataTrigger>
+                        <!-- Press / Tap State -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Apple Quick Action Tile Button with Touch Spring -->
+    <Style x:Key="HudTileButton" TargetType="Button">
+        <Setter Property="Background" Value="#1AFFFFFF" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#28FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="MinHeight" Value="50" />
+        <Setter Property="RenderTransformOrigin" Value="0.5, 0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="12" Padding="10,8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#35FFFFFF" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#55FFFFFF" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#12FFFFFF" />
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.96" ScaleY="0.96" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Apple Smooth Glow Slider -->
+    <Style x:Key="HudSlider" TargetType="Slider">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="IsMoveToPointEnabled" Value="True" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center">
+                        <Border Height="6" CornerRadius="3" Background="#35FFFFFF" />
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate>
+                                            <Border Height="6" CornerRadius="3" Background="#007AFF" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Width="20" Height="20" Cursor="Hand">
+                                    <Thumb.Template>
+                                        <ControlTemplate>
+                                            <Grid Background="Transparent">
+                                                <Ellipse Width="18" Height="18" Fill="#FFFFFF"
+                                                         Effect="{StaticResource AppleButtonShadow}" />
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- Modern Apple Thin Progress Bar -->
+    <Style x:Key="HudProgressBar" TargetType="ProgressBar">
+        <Setter Property="Height" Value="6" />
+        <Setter Property="Background" Value="#30FFFFFF" />
+        <Setter Property="Foreground" Value="#007AFF" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border CornerRadius="3" Background="{TemplateBinding Background}" ClipToBounds="True">
+                        <Border x:Name="PART_Indicator" CornerRadius="3" Background="{TemplateBinding Foreground}" HorizontalAlignment="Left" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Apple Minimal Calculator Key Button -->
+    <Style x:Key="HudCalcButton" TargetType="Button">
+        <Setter Property="Background" Value="#20FFFFFF" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#35FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Margin" Value="2" />
+        <Setter Property="RenderTransformOrigin" Value="0.5, 0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#3AFFFFFF" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#60FFFFFF" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#15FFFFFF" />
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.94" ScaleY="0.94" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Apple Calculator Orange Operator Button -->
+    <Style x:Key="HudCalcOperatorButton" TargetType="Button" BasedOn="{StaticResource HudCalcButton}">
+        <Setter Property="Background" Value="#FF9F0A" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <!-- Apple Calculator Green Equals Button -->
+    <Style x:Key="HudCalcEqualsButton" TargetType="Button" BasedOn="{StaticResource HudCalcButton}">
+        <Setter Property="Background" Value="#30D158" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <!-- Apple Dark Glass Text Box -->
+    <Style x:Key="HudTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="#1AFFFFFF" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#35FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="CaretBrush" Value="#007AFF" />
+        <Setter Property="SelectionBrush" Value="#40007AFF" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="0" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="#007AFF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

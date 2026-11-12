@@ -1,0 +1,21 @@
+## Build and output directories
+bin/
+obj/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+*.zip
+
+## Logs and scratch
+*.log
+app_lifecycle.log
+
+## Windows files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
