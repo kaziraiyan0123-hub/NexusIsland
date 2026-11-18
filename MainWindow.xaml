@@ -37,9 +37,9 @@
                 CornerRadius="{Binding ElementName=IslandContainer, Path=CornerRadius}"
                 Visibility="{Binding AmbientGlowVisibility}"
                 Background="{Binding CurrentTheme.AccentGradient}"
-                Opacity="0.45" IsHitTestVisible="False">
+                Opacity="{Binding AmbientBloomOpacity}" IsHitTestVisible="False">
             <Border.Effect>
-                <BlurEffect Radius="38" RenderingBias="Performance" />
+                <BlurEffect Radius="{Binding AmbientBloomBlur}" RenderingBias="Performance" />
             </Border.Effect>
         </Border>
 
@@ -289,7 +289,7 @@
                                         Tag="{Binding IsControlCenterMode}" Style="{StaticResource HudTabButton}" Padding="8,3" MinHeight="22">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="🎛️ " FontSize="10" />
-                                        <TextBlock Text="HUD" FontSize="10.5" FontWeight="SemiBold" />
+                                        <TextBlock Text="Controls" FontSize="10.5" FontWeight="SemiBold" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -571,22 +571,39 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Right: Live Activity Pod (Image 2) -->
+                        <!-- Right: Live Activity & Battery Telemetry Pod -->
                         <Border Grid.Column="2" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="12"
-                                BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1" Padding="6,4">
+                                BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1" Padding="8,4">
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <Grid Visibility="{Binding FocusIsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <Ellipse Width="32" Height="32" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="2"
+                                    <Ellipse Width="38" Height="38" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="2"
                                              StrokeDashArray="2 1" />
                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="🎯" FontSize="9" HorizontalAlignment="Center" />
-                                        <TextBlock Text="{Binding SatelliteText}" FontSize="8" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="🎯" FontSize="11" HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding SatelliteText}" FontSize="8.5" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Grid>
                                 <StackPanel Visibility="{Binding FocusIsRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                    <TextBlock Text="{Binding BatteryPercent, StringFormat='⚡ {0}%'}" FontSize="11" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" HorizontalAlignment="Center" />
-                                    <TextBlock Text="Battery Health" FontSize="9" Foreground="#8E8E93" HorizontalAlignment="Center" Margin="0,1,0,0" />
-                                    <TextBlock Text="Active" FontSize="9" Foreground="#34C759" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                    <!-- Circular Apple Battery Ring Gauge -->
+                                    <Grid Width="46" Height="46" Margin="0,2,0,4">
+                                        <Ellipse Width="44" Height="44" Stroke="#25FFFFFF" StrokeThickness="3.5" />
+                                        <Ellipse Width="44" Height="44" Stroke="{Binding BatteryBrush}" StrokeThickness="3.5"
+                                                 StrokeDashArray="8 2.5" RenderTransformOrigin="0.5,0.5">
+                                            <Ellipse.RenderTransform>
+                                                <RotateTransform Angle="-90" />
+                                            </Ellipse.RenderTransform>
+                                        </Ellipse>
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding BatteryPercent, StringFormat='{}{0}%'}" FontSize="11.5" FontWeight="Bold"
+                                                       Foreground="#FFFFFF" HorizontalAlignment="Center" />
+                                            <TextBlock Text="⚡" FontSize="8.5" Foreground="{Binding BatteryBrush}" HorizontalAlignment="Center"
+                                                       Visibility="{Binding Battery.IsCharging, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBlock Text="Battery Health" FontSize="8.5" Foreground="#8E8E93" HorizontalAlignment="Center" />
+                                    <Border Background="#1C30D158" CornerRadius="6" Padding="6,1.5" Margin="0,3,0,0" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding Battery.StatusText}" FontSize="8" Foreground="#30D158" FontWeight="SemiBold" />
+                                    </Border>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -615,10 +632,10 @@
 
                             <Button Command="{Binding SwitchTabCommand}" CommandParameter="{x:Static core:MiniAppTab.SystemActivity}"
                                     Tag="{Binding IsSystemActivityTab}"
-                                    Style="{StaticResource HudTabButton}" ToolTip="System Telemetry HUD">
+                                    Style="{StaticResource HudTabButton}" ToolTip="System Telemetry &amp; Metrics">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                     <TextBlock Text="📊" FontSize="11" Margin="0,0,2,0" />
-                                    <TextBlock Text="HUD" FontSize="10" FontWeight="SemiBold" />
+                                    <TextBlock Text="Metrics" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
 
@@ -791,7 +808,13 @@
                                             </Grid.ColumnDefinitions>
                                             <Button Grid.Column="0" Command="{Binding ToggleMuteCommand}"
                                                     Style="{StaticResource HudCircleButton}" Width="28" Height="28" Margin="0,0,10,0" ToolTip="Toggle Mute">
-                                                <TextBlock Text="{Binding VolumeIcon}" FontSize="13" />
+                                                <Canvas Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Path Data="M 1,4.5 L 4.5,4.5 L 8.5,1.5 L 8.5,12.5 L 4.5,9.5 L 1,9.5 Z" Fill="#FFFFFF" />
+                                                    <Path Data="M 10.5,4.5 A 4,4 0 0 1 10.5,9.5" Stroke="#FFFFFF" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                                          Visibility="{Binding IsMuted, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                                    <Line X1="2" Y1="2" X2="12" Y2="12" Stroke="#FF453A" StrokeThickness="1.75" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                          Visibility="{Binding IsMuted, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                </Canvas>
                                             </Button>
                                             <Slider Grid.Column="1" Style="{StaticResource HudSlider}"
                                                     Minimum="0" Maximum="1" Value="{Binding MasterVolume, Mode=TwoWay}" VerticalAlignment="Center" />
@@ -799,15 +822,26 @@
                                                        Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontWeight="Bold" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                         </Grid>
 
-                                        <!-- Brightness Slider -->
+                                        <!-- Brightness Slider (Vector Sun Icon) -->
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="42" />
                                             </Grid.ColumnDefinitions>
-                                            <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0">
-                                                <TextBlock Text="☀️" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0" Background="#18FFFFFF" CornerRadius="14"
+                                                    BorderBrush="#25FFFFFF" BorderThickness="1">
+                                                <Canvas Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Ellipse Width="5.5" Height="5.5" Canvas.Left="4.25" Canvas.Top="4.25" Fill="#FFD60A" />
+                                                    <Line X1="7" Y1="0.5" X2="7" Y2="2.5" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                    <Line X1="7" Y1="11.5" X2="7" Y2="13.5" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                    <Line X1="0.5" Y1="7" X2="2.5" Y2="7" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                    <Line X1="11.5" Y1="7" X2="13.5" Y2="7" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                    <Line X1="2.4" Y1="2.4" X2="3.8" Y2="3.8" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                    <Line X1="10.2" Y1="10.2" X2="11.6" Y2="11.6" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                    <Line X1="11.6" Y1="2.4" X2="10.2" Y2="3.8" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                    <Line X1="3.8" Y1="10.2" X2="2.4" Y2="11.6" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                </Canvas>
                                             </Border>
                                             <Slider Grid.Column="1" Style="{StaticResource HudSlider}"
                                                     Minimum="0" Maximum="100" Value="{Binding BrightnessPercent, Mode=TwoWay}" VerticalAlignment="Center" />
@@ -830,16 +864,16 @@
                                         <Border Grid.Column="0" Width="42" Height="42" CornerRadius="8" ClipToBounds="True"
                                                 Background="#162030" BorderBrush="{Binding CurrentTheme.AccentBrush}" BorderThickness="1.2" Margin="0,0,12,0">
                                             <Grid>
-                                                <Image Source="{Binding Media.Thumbnail}" Stretch="UniformToFill"
-                                                       Visibility="{Binding Media.Thumbnail, Converter={StaticResource NullToVisibilityConverter}}" />
+                                                <Image Source="{Binding MediaThumbnail}" Stretch="UniformToFill"
+                                                       Visibility="{Binding HasMediaThumbnail, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                                 <TextBlock Text="🎵" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                           Visibility="{Binding Media.Thumbnail, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=Inverse}" />
+                                                           Visibility="{Binding HasMediaThumbnail, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
                                             </Grid>
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Media.Title}" MaxWidth="240" TextTrimming="CharacterEllipsis"
+                                            <TextBlock Text="{Binding MediaTitle}" MaxWidth="240" TextTrimming="CharacterEllipsis"
                                                        Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontWeight="Bold" FontSize="12" />
-                                            <TextBlock Text="{Binding Media.Artist}" MaxWidth="240" TextTrimming="CharacterEllipsis"
+                                            <TextBlock Text="{Binding MediaArtist}" MaxWidth="240" TextTrimming="CharacterEllipsis"
                                                        Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" Margin="0,2,0,4" />
                                             <StackPanel Orientation="Horizontal" Height="14" VerticalAlignment="Center"
                                                         Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">

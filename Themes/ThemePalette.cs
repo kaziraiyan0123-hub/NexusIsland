@@ -53,19 +53,19 @@ public class IslandTheme
             return b;
         }
 
-        byte rTop = (byte)Math.Clamp(bgPrimary.R + accent.R / 10 + 20, 0, 255);
-        byte gTop = (byte)Math.Clamp(bgPrimary.G + accent.G / 10 + 24, 0, 255);
-        byte bTop = (byte)Math.Clamp(bgPrimary.B + accent.B / 10 + 34, 0, 255);
+        byte rTop = (byte)Math.Clamp(bgPrimary.R + accent.R / 16 + 10, 0, 255);
+        byte gTop = (byte)Math.Clamp(bgPrimary.G + accent.G / 16 + 12, 0, 255);
+        byte bTop = (byte)Math.Clamp(bgPrimary.B + accent.B / 16 + 18, 0, 255);
 
         var bgGrad = new LinearGradientBrush
         {
             StartPoint = new Point(0, 0),
             EndPoint = new Point(0, 1)
         };
-        // Ultra-Frosted Translucent Glass (Crystalline transparency with depth)
-        bgGrad.GradientStops.Add(new GradientStop(Color.FromArgb(170, rTop, gTop, bTop), 0.0));
-        bgGrad.GradientStops.Add(new GradientStop(Color.FromArgb(195, bgPrimary.R, bgPrimary.G, bgPrimary.B), 0.5));
-        bgGrad.GradientStops.Add(new GradientStop(Color.FromArgb(220, bgSecondary.R, bgSecondary.G, bgSecondary.B), 1.0));
+        // Apple Luxury Space Obsidian Liquid Glass (Zero wallpaper bleed-through, 100% solid contrast)
+        bgGrad.GradientStops.Add(new GradientStop(Color.FromArgb(250, rTop, gTop, bTop), 0.0));
+        bgGrad.GradientStops.Add(new GradientStop(Color.FromArgb(254, (byte)Math.Clamp(bgPrimary.R + 4, 0, 255), (byte)Math.Clamp(bgPrimary.G + 5, 0, 255), (byte)Math.Clamp(bgPrimary.B + 7, 0, 255)), 0.45));
+        bgGrad.GradientStops.Add(new GradientStop(Color.FromArgb(255, bgSecondary.R, bgSecondary.G, bgSecondary.B), 1.0));
         bgGrad.Freeze();
 
         var accentGrad = new LinearGradientBrush
@@ -82,12 +82,9 @@ public class IslandTheme
             StartPoint = new Point(0, 0),
             EndPoint = new Point(0, 1)
         };
-        // Frosted Glass Pod Surfaces with subtle chromatic ambient tone
-        byte rCard = (byte)Math.Clamp(accent.R / 5 + 34, 0, 255);
-        byte gCard = (byte)Math.Clamp(accent.G / 5 + 36, 0, 255);
-        byte bCard = (byte)Math.Clamp(accent.B / 5 + 46, 0, 255);
-        cardGrad.GradientStops.Add(new GradientStop(Color.FromArgb(135, rCard, gCard, bCard), 0.0));
-        cardGrad.GradientStops.Add(new GradientStop(Color.FromArgb(95, 18, 20, 28), 1.0));
+        // Frosted Glass Pod Surfaces (Crisp luminous acrylic pods)
+        cardGrad.GradientStops.Add(new GradientStop(Color.FromArgb(35, 255, 255, 255), 0.0));
+        cardGrad.GradientStops.Add(new GradientStop(Color.FromArgb(16, 255, 255, 255), 1.0));
         cardGrad.Freeze();
 
         var borderGrad = new LinearGradientBrush
@@ -96,10 +93,10 @@ public class IslandTheme
             EndPoint = new Point(1, 1)
         };
         // 3D Luminous Chromatic Refraction Rim (Brilliant white top chamfer + radiant theme color edges)
-        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(235, 255, 255, 255), 0.0));
-        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(200, accent.R, accent.G, accent.B), 0.28));
-        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(175, secondaryAccent.R, secondaryAccent.G, secondaryAccent.B), 0.72));
-        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(100, 255, 255, 255), 1.0));
+        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(245, 255, 255, 255), 0.0));
+        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(215, accent.R, accent.G, accent.B), 0.26));
+        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(185, secondaryAccent.R, secondaryAccent.G, secondaryAccent.B), 0.74));
+        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(120, 255, 255, 255), 1.0));
         borderGrad.Freeze();
 
         return new IslandTheme

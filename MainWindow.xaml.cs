@@ -209,18 +209,18 @@ public partial class MainWindow : Window
             switch (ViewModel.ExpandedMode)
             {
                 case IslandExpandedMode.MusicPlayer:
-                    targetW = 440;
-                    targetH = 232;
+                    targetW = 450;
+                    targetH = 252;
                     targetRadius = 24;
                     break;
                 case IslandExpandedMode.NotchNook:
-                    targetW = 570;
-                    targetH = 175;
-                    targetRadius = 22;
+                    targetW = 580;
+                    targetH = 185;
+                    targetRadius = 24;
                     break;
                 default:
-                    targetW = 590;
-                    targetH = 500;
+                    targetW = 600;
+                    targetH = 515;
                     targetRadius = 24;
                     break;
             }
@@ -344,18 +344,18 @@ public partial class MainWindow : Window
         switch (ViewModel.ExpandedMode)
         {
             case IslandExpandedMode.MusicPlayer:
-                targetW = 440;
-                targetH = 232;
+                targetW = 450;
+                targetH = 252;
                 targetRadius = 24;
                 break;
             case IslandExpandedMode.NotchNook:
-                targetW = 570;
-                targetH = 175;
-                targetRadius = 22;
+                targetW = 580;
+                targetH = 185;
+                targetRadius = 24;
                 break;
             default:
-                targetW = 590;
-                targetH = 500;
+                targetW = 600;
+                targetH = 515;
                 targetRadius = 24;
                 break;
         }

@@ -30,6 +30,9 @@ public class SystemMonitorService
     private long _prevBytesReceived;
     private long _prevBytesSent;
     private DateTime _prevNetworkTime = DateTime.UtcNow;
+    private int _diskQueryCounter;
+    private double _cachedDiskPercent = 85.0;
+    private string _cachedDiskFreeGb = "20 GB Free";
 
     public SystemMetrics CurrentMetrics { get; private set; } = new();
     public event Action<SystemMetrics>? MetricsUpdated;
@@ -48,7 +51,7 @@ public class SystemMonitorService
                 try
                 {
                     UpdateMetrics();
-                    await Task.Delay(1000, _cts.Token);
+                    await Task.Delay(2000, _cts.Token);
                 }
                 catch (TaskCanceledException)
                 {
@@ -139,15 +142,14 @@ public class SystemMonitorService
         {
             var now = DateTime.UtcNow;
             double elapsedSec = (now - _prevNetworkTime).TotalSeconds;
-            if (elapsedSec > 0.2)
+            if (elapsedSec > 0.5)
             {
-                long curRecv = NetworkInterface.GetAllNetworkInterfaces()
+                var activeNics = NetworkInterface.GetAllNetworkInterfaces()
                     .Where(n => n.OperationalStatus == OperationalStatus.Up)
-                    .Sum(n => n.GetIPv4Statistics().BytesReceived);
+                    .ToList();
 
-                long curSent = NetworkInterface.GetAllNetworkInterfaces()
-                    .Where(n => n.OperationalStatus == OperationalStatus.Up)
-                    .Sum(n => n.GetIPv4Statistics().BytesSent);
+                long curRecv = activeNics.Sum(n => n.GetIPv4Statistics().BytesReceived);
+                long curSent = activeNics.Sum(n => n.GetIPv4Statistics().BytesSent);
 
                 long deltaRecv = Math.Max(0, curRecv - _prevBytesReceived);
                 long deltaSent = Math.Max(0, curSent - _prevBytesSent);
@@ -165,24 +167,25 @@ public class SystemMonitorService
             // Network fallback
         }
 
-        // 4. Disk Usage
-        try
+        // 4. Disk Usage (Cached to avoid continuous disk I/O)
+        if (_diskQueryCounter++ % 5 == 0)
         {
-            var systemDrive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady && d.Name.StartsWith("C"));
-            if (systemDrive != null)
+            try
             {
-                double total = systemDrive.TotalSize;
-                double free = systemDrive.AvailableFreeSpace;
-                double used = total - free;
-                metrics.DiskPercent = Math.Round((used / total) * 100.0, 1);
-                metrics.DiskFreeGb = $"{Math.Round(free / (1024 * 1024 * 1024), 0)} GB Free";
+                var systemDrive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady && d.Name.StartsWith("C", StringComparison.OrdinalIgnoreCase));
+                if (systemDrive != null)
+                {
+                    double total = systemDrive.TotalSize;
+                    double free = systemDrive.AvailableFreeSpace;
+                    double used = total - free;
+                    _cachedDiskPercent = Math.Round((used / total) * 100.0, 1);
+                    _cachedDiskFreeGb = $"{Math.Round(free / (1024 * 1024 * 1024), 0)} GB Free";
+                }
             }
+            catch { }
         }
-        catch
-        {
-            metrics.DiskPercent = 50.0;
-            metrics.DiskFreeGb = "OK";
-        }
+        metrics.DiskPercent = _cachedDiskPercent;
+        metrics.DiskFreeGb = _cachedDiskFreeGb;
 
         CurrentMetrics = metrics;
         MetricsUpdated?.Invoke(metrics);

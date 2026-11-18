@@ -688,6 +688,16 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(MediaProgressFraction));
             OnPropertyChanged(nameof(MediaProgressWidth));
             OnPropertyChanged(nameof(PlayPauseIcon));
+
+            if (_media.IsPlaying)
+            {
+                if (_audioWaveTimer != null && !_audioWaveTimer.IsEnabled) _audioWaveTimer.Start();
+            }
+            else
+            {
+                if (_audioWaveTimer != null && _audioWaveTimer.IsEnabled) _audioWaveTimer.Stop();
+                AudioPeak = 0;
+            }
         }
     }
     public bool IsMediaPlaying => Media.IsPlaying;
@@ -806,6 +816,7 @@ public class MainViewModel : INotifyPropertyChanged
         get => _audioPeak;
         private set
         {
+            if (Math.Abs(_audioPeak - value) < 0.005f) return;
             _audioPeak = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(EqBar1));
@@ -814,8 +825,13 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(EqBar4));
             OnPropertyChanged(nameof(EqBar5));
             OnPropertyChanged(nameof(EqBar6));
+            OnPropertyChanged(nameof(AmbientBloomOpacity));
+            OnPropertyChanged(nameof(AmbientBloomBlur));
         }
     }
+
+    public double AmbientBloomOpacity => Media.IsPlaying ? Math.Clamp(0.50 + AudioPeak * 0.40, 0.50, 0.95) : 0.60;
+    public double AmbientBloomBlur => Media.IsPlaying ? Math.Clamp(36.0 + AudioPeak * 22.0, 36.0, 58.0) : 40.0;
 
     public double EqBar1 => Media.IsPlaying ? Math.Clamp(AudioPeak * 14.0 + 3.5 + 3.0 * Math.Sin(_wavePhase * 1.2), 3.0, 18.0) : 0.0;
     public double EqBar2 => Media.IsPlaying ? Math.Clamp(AudioPeak * 18.0 + 5.0 + 5.0 * Math.Cos(_wavePhase * 1.5), 4.0, 20.0) : 0.0;
@@ -1109,8 +1125,8 @@ public class MainViewModel : INotifyPropertyChanged
         };
         _batteryTimer.Start();
 
-        // 3. Audio Volume Sync Timer (every 600ms)
-        _audioSyncTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
+        // 3. Audio Volume Sync Timer (every 1.5s to minimize COM polling)
+        _audioSyncTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
         _audioSyncTimer.Tick += (s, e) =>
         {
             try
@@ -1135,23 +1151,29 @@ public class MainViewModel : INotifyPropertyChanged
         };
         _audioSyncTimer.Start();
 
-        // 4. Equalizer Waveform Timer (every 20ms for buttery 50fps Apple fluid waves)
-        _audioWaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(20) };
+        // 4. Equalizer Waveform Timer (ticks ONLY when music is playing, 30 FPS for buttery smooth wave with 0% idle CPU)
+        _audioWaveTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(33) };
         _audioWaveTimer.Tick += (s, e) =>
         {
+            if (!Media.IsPlaying)
+            {
+                _audioWaveTimer.Stop();
+                AudioPeak = 0;
+                return;
+            }
             try
             {
-                _wavePhase += 0.14;
+                _wavePhase += 0.20;
                 float peak = AudioService.GetPeakSample();
-                if (Media.IsPlaying && peak < 0.05f)
+                if (peak < 0.05f)
                 {
-                    peak = (float)(0.20 + 0.12 * Math.Sin(_wavePhase));
+                    peak = (float)(0.22 + 0.14 * Math.Sin(_wavePhase));
                 }
                 AudioPeak = peak;
             }
             catch { }
         };
-        _audioWaveTimer.Start();
+        if (Media.IsPlaying) _audioWaveTimer.Start();
 
         // 5. System Monitor Hook (Phase 3)
         SystemMonitor.MetricsUpdated += metrics =>

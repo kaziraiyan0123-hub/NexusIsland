@@ -316,15 +316,15 @@
 
     <!-- Apple Minimal Calculator Key Button -->
     <Style x:Key="HudCalcButton" TargetType="Button">
-        <Setter Property="Background" Value="#20FFFFFF" />
+        <Setter Property="Background" Value="#1AFFFFFF" />
         <Setter Property="Foreground" Value="#FFFFFF" />
-        <Setter Property="BorderBrush" Value="#35FFFFFF" />
+        <Setter Property="BorderBrush" Value="#25FFFFFF" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="MinHeight" Value="38" />
-        <Setter Property="Margin" Value="2" />
+        <Setter Property="Margin" Value="2.5" />
         <Setter Property="RenderTransformOrigin" Value="0.5, 0.5" />
         <Setter Property="RenderTransform">
             <Setter.Value>
@@ -337,16 +337,16 @@
                     <Border x:Name="border" Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8">
+                            CornerRadius="10">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#3AFFFFFF" />
-                            <Setter TargetName="border" Property="BorderBrush" Value="#60FFFFFF" />
+                            <Setter TargetName="border" Property="Background" Value="#32FFFFFF" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#55FFFFFF" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#15FFFFFF" />
+                            <Setter TargetName="border" Property="Background" Value="#12FFFFFF" />
                             <Setter Property="RenderTransform">
                                 <Setter.Value>
                                     <ScaleTransform ScaleX="0.94" ScaleY="0.94" />
@@ -359,20 +359,34 @@
         </Setter>
     </Style>
 
-    <!-- Apple Calculator Orange Operator Button -->
+    <!-- Apple Calculator Warm Amber Operator Button -->
     <Style x:Key="HudCalcOperatorButton" TargetType="Button" BasedOn="{StaticResource HudCalcButton}">
-        <Setter Property="Background" Value="#FF9F0A" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#FFA726" Offset="0.0" />
+                    <GradientStop Color="#F57C00" Offset="1.0" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#60FFA726" />
         <Setter Property="Foreground" Value="#FFFFFF" />
-        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="FontWeight" Value="Bold" />
     </Style>
 
-    <!-- Apple Calculator Green Equals Button -->
+    <!-- Apple Calculator Vibrant Emerald Equals Button -->
     <Style x:Key="HudCalcEqualsButton" TargetType="Button" BasedOn="{StaticResource HudCalcButton}">
-        <Setter Property="Background" Value="#30D158" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#34D399" Offset="0.0" />
+                    <GradientStop Color="#059669" Offset="1.0" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#6034D399" />
         <Setter Property="Foreground" Value="#FFFFFF" />
         <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="BorderThickness" Value="0" />
     </Style>
 
     <!-- Apple Dark Glass Text Box -->
