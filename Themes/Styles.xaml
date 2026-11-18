@@ -22,9 +22,9 @@
     <SolidColorBrush x:Key="IslandDangerRed" Color="#EF4444" />
     <SolidColorBrush x:Key="IslandSuccessGreen" Color="#10B981" />
 
-    <!-- Refined Apple Soft Drop Shadows -->
-    <DropShadowEffect x:Key="IslandShadow" BlurRadius="38" ShadowDepth="8" Direction="270" Color="#000000" Opacity="0.55" />
-    <DropShadowEffect x:Key="AppleButtonShadow" BlurRadius="12" ShadowDepth="3" Direction="270" Color="#000000" Opacity="0.35" />
+    <!-- Refined Apple Soft Drop Shadows (Zero directional distortion, pure organic radial glow) -->
+    <DropShadowEffect x:Key="IslandShadow" BlurRadius="20" ShadowDepth="0" Color="#000000" Opacity="0.30" />
+    <DropShadowEffect x:Key="AppleButtonShadow" BlurRadius="8" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.25" />
     <DropShadowEffect x:Key="SubtleGlowEffect" BlurRadius="8" ShadowDepth="0" Color="#007AFF" Opacity="0.45" />
 
     <!-- Apple Circular Dark Glass Button Style -->

@@ -58,6 +58,27 @@ public class AppLauncherService
 
         // 3. Known quick system commands
         string lower = query.ToLowerInvariant();
+
+        // 3. Quick Web Provider Shortcuts (yt, gh, wiki)
+        if (lower.StartsWith("yt ") || lower.StartsWith("youtube "))
+        {
+            string q = query.Substring(query.IndexOf(' ') + 1).Trim();
+            LaunchTarget($"https://www.youtube.com/results?search_query={Uri.EscapeDataString(q)}");
+            return;
+        }
+        if (lower.StartsWith("gh ") || lower.StartsWith("github "))
+        {
+            string q = query.Substring(query.IndexOf(' ') + 1).Trim();
+            LaunchTarget($"https://github.com/search?q={Uri.EscapeDataString(q)}");
+            return;
+        }
+        if (lower.StartsWith("w ") || lower.StartsWith("wiki "))
+        {
+            string q = query.Substring(query.IndexOf(' ') + 1).Trim();
+            LaunchTarget($"https://en.wikipedia.org/wiki/Special:Search?search={Uri.EscapeDataString(q)}");
+            return;
+        }
+
         switch (lower)
         {
             case "cmd":

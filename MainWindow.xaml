@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         Title="NEXUS ISLAND"
         Icon="Assets/app_logo.png"
-        FontFamily="Segoe UI Variable Text, Segoe UI, sans-serif"
+        FontFamily="Segoe UI Variable Text, Aptos, -apple-system, BlinkMacSystemFont, 'SF Pro Text', Segoe UI, sans-serif"
         TextOptions.TextFormattingMode="Display"
         TextOptions.TextRenderingMode="ClearType"
         RenderOptions.ClearTypeHint="Enabled"
@@ -39,8 +39,11 @@
                 Background="{Binding CurrentTheme.AccentGradient}"
                 Opacity="{Binding AmbientBloomOpacity}" IsHitTestVisible="False">
             <Border.Effect>
-                <BlurEffect Radius="{Binding AmbientBloomBlur}" RenderingBias="Performance" />
+                <BlurEffect Radius="{Binding AmbientBloomBlur}" RenderingBias="Quality" />
             </Border.Effect>
+            <Border.LayoutTransform>
+                <ScaleTransform ScaleX="{Binding IslandScale}" ScaleY="{Binding IslandScale}" />
+            </Border.LayoutTransform>
         </Border>
 
         <!-- Floating Main Island Container (Strictly Centered, Never Moves When Satellite Pops) -->
@@ -273,22 +276,31 @@
                             <StackPanel Orientation="Horizontal">
                                 <Button Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.MusicPlayer}"
                                         Tag="{Binding IsMusicPlayerMode}" Style="{StaticResource HudTabButton}" Padding="8,3" MinHeight="22">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="🎵 " FontSize="10" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M 7,0 L 7,6 A 2,2 0 1 1 5,4 A 2,2 0 0 1 7,6 L 7,2 L 10,1 L 10,0 Z" Fill="#FFFFFF" Margin="0,0,4,0" VerticalAlignment="Center" />
                                         <TextBlock Text="Player" FontSize="10.5" FontWeight="SemiBold" />
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.NotchNook}"
                                         Tag="{Binding IsNotchNookMode}" Style="{StaticResource HudTabButton}" Padding="8,3" MinHeight="22">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="📅 " FontSize="10" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="11" Height="11" CornerRadius="2.5" BorderBrush="#FFFFFF" BorderThickness="0.8" Margin="0,0,4,0" VerticalAlignment="Center">
+                                            <Grid>
+                                                <Border VerticalAlignment="Top" Height="2.5" CornerRadius="1.5,1.5,0,0" Background="#FFFFFF" />
+                                                <Ellipse Width="1.5" Height="1.5" Fill="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,1.5" />
+                                            </Grid>
+                                        </Border>
                                         <TextBlock Text="Nook" FontSize="10.5" FontWeight="SemiBold" />
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding SelectExpandedModeCommand}" CommandParameter="{x:Static vm:IslandExpandedMode.ControlCenter}"
                                         Tag="{Binding IsControlCenterMode}" Style="{StaticResource HudTabButton}" Padding="8,3" MinHeight="22">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="🎛️ " FontSize="10" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Canvas Width="10" Height="10" Margin="0,0,4,0" VerticalAlignment="Center">
+                                            <Path Data="M 1,2.5 L 9,2.5 M 1,7.5 L 9,7.5" Stroke="#FFFFFF" StrokeThickness="1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                            <Ellipse Width="2.5" Height="2.5" Fill="#FFFFFF" Canvas.Left="2.5" Canvas.Top="1.25" />
+                                            <Ellipse Width="2.5" Height="2.5" Fill="#FFFFFF" Canvas.Left="5.5" Canvas.Top="6.25" />
+                                        </Canvas>
                                         <TextBlock Text="Controls" FontSize="10.5" FontWeight="SemiBold" />
                                     </StackPanel>
                                 </Button>
@@ -456,9 +468,9 @@
                     <Grid Grid.Row="1" Visibility="{Binding IsNotchNookMode, Converter={StaticResource BooleanToVisibilityConverter}}"
                           Margin="2,2,2,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="185" />
+                            <ColumnDefinition Width="175" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="115" />
                         </Grid.ColumnDefinitions>
 
                         <!-- Left: Mini Now Playing Pod -->
@@ -506,69 +518,121 @@
                             </Grid>
                         </Border>
 
-                        <!-- Center: Interactive Calendar Day Strip (Exact Image 2 Calendar) -->
+                        <!-- Center: Apple Notch Nook Calendar Card (Refined macOS Style) -->
                         <Border Grid.Column="1" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="12"
-                                BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1" Padding="8,4" Margin="0,0,6,0">
-                            <StackPanel VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,3">
-                                    <TextBlock Text="{Binding CurrentMonthName}" FontWeight="Bold" FontSize="12"
-                                               Foreground="{Binding CurrentTheme.AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                    <ItemsControl ItemsSource="{Binding CalendarDays}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Button Command="{Binding DataContext.SelectCalendarDayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                        CommandParameter="{Binding}"
-                                                        Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand" Margin="2,0">
-                                                    <Border Width="28" Height="36" CornerRadius="8" Background="Transparent">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                        <Setter Property="Background" Value="#007AFF" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                            <TextBlock Text="{Binding DayName}" FontSize="8.5" FontWeight="SemiBold" HorizontalAlignment="Center">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="#8E8E93" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                                <Setter Property="Foreground" Value="#FFFFFF" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                            <TextBlock Text="{Binding DayNumber, StringFormat='{}{0:D2}'}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="#C7C7CC" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                                <Setter Property="Foreground" Value="#FFFFFF" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </Button>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1" Padding="10,6" Margin="0,0,6,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Row 0: Month & Year + Today Badge -->
+                                <Grid Grid.Row="0" Margin="2,0,2,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <!-- Sleek Apple Calendar Icon -->
+                                        <Border Width="16" Height="16" CornerRadius="4" Background="#18FFFFFF" BorderBrush="#30FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                            <Grid>
+                                                <Border VerticalAlignment="Top" Height="4" CornerRadius="3,3,0,0" Background="{Binding CurrentTheme.AccentBrush}" />
+                                                <TextBlock Text="📅" FontSize="8" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                                            </Grid>
+                                        </Border>
+                                        <TextBlock Text="{Binding CurrentMonthYear}" FontWeight="SemiBold" FontSize="10.5"
+                                                   Foreground="{Binding CurrentTheme.AccentBrush}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#20FFFFFF" CornerRadius="6" Padding="6,1.5">
+                                        <TextBlock Text="{Binding CurrentDayOfWeekShort, StringFormat='{}TODAY • {0}'}"
+                                                   FontSize="8.5" FontWeight="SemiBold" Foreground="#8E8E93" />
+                                    </Border>
+                                </Grid>
+
+                                <!-- Row 1: 7-Day Interactive Day Strip with Rounded Squircle Highlights -->
+                                <ItemsControl Grid.Row="1" ItemsSource="{Binding CalendarDays}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.SelectCalendarDayCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand" Margin="2.5,0">
+                                                <Border Width="30" Height="40" CornerRadius="9" Background="Transparent">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                    <Setter Property="Background" Value="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.AccentBrush}" />
+                                                                    <Setter Property="Effect">
+                                                                        <Setter.Value>
+                                                                            <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#007AFF" Opacity="0.5" />
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                        <TextBlock Text="{Binding DayName}" FontSize="8.5" FontWeight="Medium" HorizontalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#8E8E93" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#FFFFFF" />
+                                                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <TextBlock Text="{Binding DayNumber, StringFormat='{}{0:D2}'}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,1,0,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#C7C7CC" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#FFFFFF" />
+                                                                            <Setter Property="FontWeight" Value="Bold" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <!-- Little indicator dot for Today -->
+                                                        <Ellipse Width="3" Height="3" Margin="0,2,0,0"
+                                                                 Visibility="{Binding IsToday, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Fill" Value="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.AccentBrush}" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                            <Setter Property="Fill" Value="#FFFFFF" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Row 2: Status & Focus Line -->
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,3,0,0">
+                                    <TextBlock Text="⚡" FontSize="8.5" Foreground="{Binding CurrentTheme.AccentBrush}" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding CalendarStatus}" Foreground="#98989D" FontSize="9"
+                                               TextTrimming="CharacterEllipsis" MaxWidth="250" VerticalAlignment="Center" />
                                 </StackPanel>
-                                <TextBlock Text="{Binding CalendarStatus}" Foreground="#8E8E93"
-                                           FontSize="9.5" Margin="0,2,0,0" HorizontalAlignment="Center" />
-                            </StackPanel>
+                            </Grid>
                         </Border>
 
                         <!-- Right: Live Activity & Battery Telemetry Pod -->
@@ -625,7 +689,7 @@
                                     Tag="{Binding IsQuickControlsTab}"
                                     Style="{StaticResource HudTabButton}" ToolTip="Quick Controls &amp; Sliders">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="⚡" FontSize="11" Margin="0,0,2,0" />
+                                    <Path Data="M 6,1 L 1.5,7.5 L 5,7.5 L 4,12 L 9.5,5.5 L 6,5.5 Z" Fill="#FFFFFF" Margin="0,0,3,0" VerticalAlignment="Center" />
                                     <TextBlock Text="Ctrl" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
@@ -634,7 +698,11 @@
                                     Tag="{Binding IsSystemActivityTab}"
                                     Style="{StaticResource HudTabButton}" ToolTip="System Telemetry &amp; Metrics">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="📊" FontSize="11" Margin="0,0,2,0" />
+                                    <Canvas Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
+                                        <Border Width="2" Height="5" CornerRadius="1" Background="#FFFFFF" Canvas.Left="0" Canvas.Top="5" />
+                                        <Border Width="2" Height="10" CornerRadius="1" Background="#FFFFFF" Canvas.Left="3.5" Canvas.Top="0" />
+                                        <Border Width="2" Height="7" CornerRadius="1" Background="#FFFFFF" Canvas.Left="7" Canvas.Top="3" />
+                                    </Canvas>
                                     <TextBlock Text="Metrics" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
@@ -643,7 +711,7 @@
                                     Tag="{Binding IsClipboardTab}"
                                     Style="{StaticResource HudTabButton}" ToolTip="Clipboard Manager">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="📋" FontSize="11" Margin="0,0,2,0" />
+                                    <Path Data="M 3,3 L 1,3 A 1,1 0 0 0 0,4 L 0,11 A 1,1 0 0 0 1,12 L 8,12 A 1,1 0 0 0 9,11 L 9,4 A 1,1 0 0 0 8,3 L 6,3 M 3,1 L 6,1 A 0.8,0.8 0 0 1 6.8,1.8 L 6.8,3 A 0.8,0.8 0 0 1 6,3.8 L 3,3.8 A 0.8,0.8 0 0 1 2.2,3 L 2.2,1.8 A 0.8,0.8 0 0 1 3,1 Z" Stroke="#FFFFFF" StrokeThickness="1" StrokeLineJoin="Round" Margin="0,0,3,0" VerticalAlignment="Center" />
                                     <TextBlock Text="Clips" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
@@ -652,7 +720,9 @@
                                     Tag="{Binding IsNotesTab}"
                                     Style="{StaticResource HudTabButton}" ToolTip="Quick Notes Scratchpad">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="📝" FontSize="11" Margin="0,0,2,0" />
+                                    <Canvas Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
+                                        <Path Data="M 1,1 L 8,1 A 1,1 0 0 1 9,2 L 9,9 A 1,1 0 0 1 8,10 L 1,10 A 1,1 0 0 1 0,9 L 0,2 A 1,1 0 0 1 1,1 Z M 2.5,3.5 L 6.5,3.5 M 2.5,6.5 L 5,6.5" Stroke="#FFFFFF" StrokeThickness="1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    </Canvas>
                                     <TextBlock Text="Notes" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
@@ -661,7 +731,9 @@
                                     Tag="{Binding IsCalculatorTab}"
                                     Style="{StaticResource HudTabButton}" ToolTip="Scientific Calculator">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="🧮" FontSize="11" Margin="0,0,2,0" />
+                                    <Canvas Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
+                                        <Path Data="M 1,3 L 4,3 M 2.5,1.5 L 2.5,4.5 M 6,3 L 9,3 M 1,8 L 4,8 M 1,9.5 L 4,9.5 M 6,7 L 9,10 M 9,7 L 6,10" Stroke="#FFFFFF" StrokeThickness="1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    </Canvas>
                                     <TextBlock Text="Calc" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
@@ -670,7 +742,10 @@
                                     Tag="{Binding IsFocusTab}"
                                     Style="{StaticResource HudTabButton}" ToolTip="Focus &amp; Pomodoro Timers">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="⏱️" FontSize="11" Margin="0,0,2,0" />
+                                    <Canvas Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
+                                        <Ellipse Width="9" Height="9" Stroke="#FFFFFF" StrokeThickness="1" Canvas.Left="0.5" Canvas.Top="0.5" />
+                                        <Ellipse Width="3" Height="3" Fill="#FFFFFF" Canvas.Left="3.5" Canvas.Top="3.5" />
+                                    </Canvas>
                                     <TextBlock Text="Focus" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
@@ -679,7 +754,12 @@
                                     Tag="{Binding IsAppLauncherTab}"
                                     Style="{StaticResource HudTabButton}" ToolTip="Universal App Launcher &amp; Search">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="🚀" FontSize="11" Margin="0,0,2,0" />
+                                    <Canvas Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
+                                        <Border Width="3.5" Height="3.5" CornerRadius="1" Background="#FFFFFF" Canvas.Left="0.5" Canvas.Top="0.5" />
+                                        <Border Width="3.5" Height="3.5" CornerRadius="1" Background="#FFFFFF" Canvas.Left="5.5" Canvas.Top="0.5" />
+                                        <Border Width="3.5" Height="3.5" CornerRadius="1" Background="#FFFFFF" Canvas.Left="0.5" Canvas.Top="5.5" />
+                                        <Border Width="3.5" Height="3.5" CornerRadius="1" Background="#FFFFFF" Canvas.Left="5.5" Canvas.Top="5.5" />
+                                    </Canvas>
                                     <TextBlock Text="Apps" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
@@ -688,7 +768,12 @@
                                     Tag="{Binding IsSettingsTab}"
                                     Style="{StaticResource HudTabButton}" ToolTip="Theme &amp; Island Personalization">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="🎨" FontSize="11" Margin="0,0,2,0" />
+                                    <Canvas Width="10" Height="10" Margin="0,0,3,0" VerticalAlignment="Center">
+                                        <Ellipse Width="9" Height="9" Stroke="#FFFFFF" StrokeThickness="1" Canvas.Left="0.5" Canvas.Top="0.5" />
+                                        <Ellipse Width="1.5" Height="1.5" Fill="#FF453A" Canvas.Left="2.5" Canvas.Top="2.5" />
+                                        <Ellipse Width="1.5" Height="1.5" Fill="#FFD60A" Canvas.Left="6" Canvas.Top="2.5" />
+                                        <Ellipse Width="1.5" Height="1.5" Fill="#30D158" Canvas.Left="3" Canvas.Top="6" />
+                                    </Canvas>
                                     <TextBlock Text="Theme" FontSize="10" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
@@ -703,14 +788,21 @@
                                       Visibility="{Binding IsQuickControlsTab, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <StackPanel Margin="0,0,4,0">
 
-                                <!-- Quick Action Tiles Grid (8 Tiles) -->
+                                <!-- Quick Action Tiles Grid (8 Modern Vector Tiles) -->
                                 <UniformGrid Columns="4" Rows="2" Margin="0,0,0,8">
                                     <!-- 1. Wi-Fi -->
                                     <Button Command="{Binding WifiCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="📶" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="16" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Path Data="M 1,3 A 12,12 0 0 1 15,3" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                    <Path Data="M 3.8,6.5 A 8,8 0 0 1 12.2,6.5" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                    <Path Data="M 6.5,10 A 3.5,3.5 0 0 1 9.5,10" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                    <Ellipse Width="2.2" Height="2.2" Fill="{Binding CurrentTheme.AccentBrush}" Canvas.Left="6.9" Canvas.Top="11.5" />
+                                                </Canvas>
+                                            </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Wi-Fi" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Wi-Fi" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Networks" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
@@ -719,9 +811,14 @@
                                     <!-- 2. Bluetooth -->
                                     <Button Command="{Binding BluetoothCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🎧" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="14" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Path Data="M 3.5,4 L 10.5,10.5 L 7,14.5 L 7,1.5 L 10.5,5.5 L 3.5,12"
+                                                          Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                                                </Canvas>
+                                            </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Bluetooth" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Bluetooth" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Devices" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
@@ -730,9 +827,14 @@
                                     <!-- 3. Dark/Light Theme -->
                                     <Button Command="{Binding ToggleWindowsThemeCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🌙" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Path Data="M 13,2.5 A 7,7 0 1 1 5,14.5 A 6.5,6.5 0 0 0 13,2.5 Z"
+                                                          Fill="{Binding CurrentTheme.AccentBrush}" />
+                                                </Canvas>
+                                            </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Theme" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Theme" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Dark/Light" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
@@ -741,9 +843,14 @@
                                     <!-- 4. Night Light -->
                                     <Button Command="{Binding NightLightCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="💡" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Path Data="M 8,3.5 A 4.5,4.5 0 1 1 8,12.5 A 4.5,4.5 0 1 1 8,3.5 M 8,0.5 L 8,2 M 8,14 L 8,15.5 M 0.5,8 L 2,8 M 14,8 L 15.5,8 M 2.7,2.7 L 3.8,3.8 M 12.2,12.2 L 13.3,13.3 M 2.7,13.3 L 3.8,12.2 M 12.2,3.8 L 13.3,2.7"
+                                                          Stroke="#FF9F0A" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                </Canvas>
+                                            </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Night Light" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Night Light" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Display" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
@@ -752,9 +859,15 @@
                                     <!-- 5. Screenshot -->
                                     <Button Command="{Binding ScreenshotCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="📸" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="16" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Border Width="15" Height="11" CornerRadius="2.5" BorderBrush="{Binding CurrentTheme.AccentBrush}" BorderThickness="1.3" Canvas.Left="0.5" Canvas.Top="2" />
+                                                    <Ellipse Width="4.5" Height="4.5" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.2" Canvas.Left="5.75" Canvas.Top="5" />
+                                                    <Border Width="4" Height="2" CornerRadius="1,1,0,0" Background="{Binding CurrentTheme.AccentBrush}" Canvas.Left="3" Canvas.Top="0.5" />
+                                                </Canvas>
+                                            </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Capture" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Capture" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Snip Tool" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
@@ -763,9 +876,14 @@
                                     <!-- 6. Screen Record -->
                                     <Button Command="{Binding ScreenRecordCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🎥" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Ellipse Width="15" Height="15" Stroke="#FF453A" StrokeThickness="1.4" Canvas.Left="0.5" Canvas.Top="0.5" />
+                                                    <Ellipse Width="7" Height="7" Fill="#FF453A" Canvas.Left="4.5" Canvas.Top="4.5" />
+                                                </Canvas>
+                                            </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Record" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Record" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Game Bar" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
@@ -774,9 +892,15 @@
                                     <!-- 7. Battery Saver -->
                                     <Button Command="{Binding BatterySaverCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🔋" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="18" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Border Width="14" Height="9" CornerRadius="2" BorderBrush="#30D158" BorderThickness="1.3" Background="#1830D158" Canvas.Left="0.5" Canvas.Top="1.5" />
+                                                    <Border Width="1.5" Height="3.5" CornerRadius="0,1,1,0" Background="#30D158" Canvas.Left="15" Canvas.Top="4.25" />
+                                                    <Path Data="M 8,2 L 6,5.5 L 8,5.5 L 7,9 L 10,4.8 L 8,4.8 Z" Fill="#30D158" />
+                                                </Canvas>
+                                            </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Battery" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Battery" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Saver Mode" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
@@ -785,9 +909,17 @@
                                     <!-- 8. Lock Screen -->
                                     <Button Command="{Binding LockScreenCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="🛡️" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="14" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Path Data="M 3.5,6.5 L 3.5,3.8 A 3.5,3.5 0 0 1 10.5,3.8 L 10.5,6.5"
+                                                          Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                    <Border Width="13" Height="9" CornerRadius="2.2" BorderBrush="{Binding CurrentTheme.AccentBrush}" BorderThickness="1.3" Background="#18FFFFFF" Canvas.Left="0.5" Canvas.Top="6.5" />
+                                                    <Ellipse Width="2.5" Height="2.5" Fill="{Binding CurrentTheme.AccentBrush}" Canvas.Left="5.75" Canvas.Top="8.5" />
+                                                    <Path Data="M 7,11 L 7,13" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                </Canvas>
+                                            </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Lock" FontWeight="Bold" FontSize="11" />
+                                                <TextBlock Text="Lock" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Workstation" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
@@ -1437,8 +1569,8 @@
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
-                            <!-- Universal Search Bar -->
-                            <Border Grid.Row="0" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="10" Padding="10,8" Margin="0,0,0,8"
+                            <!-- Universal Spotlight Search Bar -->
+                            <Border Grid.Row="0" Background="{Binding CurrentTheme.CardGradient}" CornerRadius="12" Padding="10,6" Margin="0,0,0,8"
                                     BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -1446,17 +1578,21 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="🔍" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <!-- Sleek Apple Spotlight Search Vector -->
+                                    <Canvas Width="16" Height="16" VerticalAlignment="Center" Margin="2,0,8,0">
+                                        <Ellipse Width="10" Height="10" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.6" Canvas.Left="1" Canvas.Top="1" />
+                                        <Path Data="M 8.5,8.5 L 14,14" Stroke="{Binding CurrentTheme.AccentBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    </Canvas>
                                     <TextBox Grid.Column="1" Text="{Binding AppSearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource HudTextBox}" FontSize="12" Padding="6,4" VerticalAlignment="Center" />
+                                             Style="{StaticResource HudTextBox}" FontSize="11.5" Padding="4,3" VerticalAlignment="Center" />
                                     <Button Grid.Column="2" Command="{Binding ExecuteSearchCommand}" Style="{StaticResource HudPillButton}"
-                                            Padding="12,5" Margin="8,0,0,0" ToolTip="Execute Search or Command">
-                                        <TextBlock Text="Launch ↵" FontSize="11" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                            Padding="10,4" Margin="6,0,0,0" ToolTip="Execute Search or Command">
+                                        <TextBlock Text="Return ↵" FontSize="10" FontWeight="SemiBold" Foreground="{Binding CurrentTheme.AccentBrush}" />
                                     </Button>
                                 </Grid>
                             </Border>
 
-                            <!-- Apps Shortcuts Grid -->
+                            <!-- Apps Shortcuts Grid with Luxury Apple Squircles -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                 <ItemsControl ItemsSource="{Binding AppsView}">
                                     <ItemsControl.ItemsPanel>
@@ -1468,18 +1604,155 @@
                                         <DataTemplate>
                                             <Border Background="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.CardGradient}"
                                                     BorderBrush="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.BorderBrush}"
-                                                    BorderThickness="1" CornerRadius="10" Padding="10,12" Margin="4">
+                                                    BorderThickness="1" CornerRadius="12" Padding="10,12" Margin="4">
                                                 <Button Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.LaunchAppCommand}"
                                                         CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand"
                                                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                                     <StackPanel HorizontalAlignment="Center">
-                                                        <TextBlock Text="{Binding IconGlyph}" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,6" />
-                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="11"
+                                                        <!-- Dynamic Bespoke Apple App Squircle Icon -->
+                                                        <ContentControl Content="{Binding}" Margin="0,0,0,8">
+                                                            <ContentControl.Style>
+                                                                <Style TargetType="ContentControl">
+                                                                    <!-- Default Fallback Glass Icon Squircle -->
+                                                                    <Setter Property="ContentTemplate">
+                                                                        <Setter.Value>
+                                                                            <DataTemplate>
+                                                                                <Border Width="42" Height="42" CornerRadius="10" Background="#20FFFFFF" BorderBrush="#35FFFFFF" BorderThickness="1">
+                                                                                    <TextBlock Text="{Binding IconGlyph}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                                </Border>
+                                                                            </DataTemplate>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                    <Style.Triggers>
+                                                                        <!-- 1. Terminal -->
+                                                                        <DataTrigger Binding="{Binding Name}" Value="Terminal">
+                                                                            <Setter Property="ContentTemplate">
+                                                                                <Setter.Value>
+                                                                                    <DataTemplate>
+                                                                                        <Border Width="42" Height="42" CornerRadius="10" BorderBrush="#5038BDF8" BorderThickness="1.2">
+                                                                                            <Border.Background>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                                                    <GradientStop Color="#0F172A" Offset="0" />
+                                                                                                    <GradientStop Color="#1E293B" Offset="1" />
+                                                                                                </LinearGradientBrush>
+                                                                                            </Border.Background>
+                                                                                            <TextBlock Text=">_" FontFamily="Consolas, monospace" FontWeight="Bold" FontSize="18"
+                                                                                                       Foreground="#38BDF8" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0" />
+                                                                                        </Border>
+                                                                                    </DataTemplate>
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                        <!-- 2. Task Manager -->
+                                                                        <DataTrigger Binding="{Binding Name}" Value="Task Manager">
+                                                                            <Setter Property="ContentTemplate">
+                                                                                <Setter.Value>
+                                                                                    <DataTemplate>
+                                                                                        <Border Width="42" Height="42" CornerRadius="10" BorderBrush="#5060A5FA" BorderThickness="1.2">
+                                                                                            <Border.Background>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                                                    <GradientStop Color="#0B132B" Offset="0" />
+                                                                                                    <GradientStop Color="#1C2541" Offset="1" />
+                                                                                                </LinearGradientBrush>
+                                                                                            </Border.Background>
+                                                                                            <Path Data="M 3,11 L 8,11 L 11,4 L 14,18 L 17,8 L 20,11 L 25,11"
+                                                                                                  Stroke="#60A5FA" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                                                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                                        </Border>
+                                                                                    </DataTemplate>
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                        <!-- 3. Explorer -->
+                                                                        <DataTrigger Binding="{Binding Name}" Value="Explorer">
+                                                                            <Setter Property="ContentTemplate">
+                                                                                <Setter.Value>
+                                                                                    <DataTemplate>
+                                                                                        <Border Width="42" Height="42" CornerRadius="10" BorderBrush="#5038BDF8" BorderThickness="1.2">
+                                                                                            <Border.Background>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                                                    <GradientStop Color="#0284C7" Offset="0" />
+                                                                                                    <GradientStop Color="#0369A1" Offset="1" />
+                                                                                                </LinearGradientBrush>
+                                                                                            </Border.Background>
+                                                                                            <Path Data="M 3,6 L 10,6 L 12,8 L 23,8 A 1.5,1.5 0 0 1 24.5,9.5 L 24.5,19 A 1.5,1.5 0 0 1 23,20.5 L 3,20.5 A 1.5,1.5 0 0 1 1.5,19 L 1.5,7.5 A 1.5,1.5 0 0 1 3,6 Z"
+                                                                                                  Fill="#FFFFFF" Opacity="0.95" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                                        </Border>
+                                                                                    </DataTemplate>
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                        <!-- 4. Notepad -->
+                                                                        <DataTrigger Binding="{Binding Name}" Value="Notepad">
+                                                                            <Setter Property="ContentTemplate">
+                                                                                <Setter.Value>
+                                                                                    <DataTemplate>
+                                                                                        <Border Width="42" Height="42" CornerRadius="10" BorderBrush="#50FDE68A" BorderThickness="1.2">
+                                                                                            <Border.Background>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                                                    <GradientStop Color="#D97706" Offset="0" />
+                                                                                                    <GradientStop Color="#B45309" Offset="1" />
+                                                                                                </LinearGradientBrush>
+                                                                                            </Border.Background>
+                                                                                            <Path Data="M 5,4 L 17,4 A 1.5,1.5 0 0 1 18.5,5.5 L 18.5,19.5 A 1.5,1.5 0 0 1 17,21 L 5,21 A 1.5,1.5 0 0 1 3.5,19.5 L 3.5,5.5 A 1.5,1.5 0 0 1 5,4 Z M 7,8 L 15,8 M 7,12 L 15,12 M 7,16 L 12,16"
+                                                                                                  Stroke="#FFFFFF" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                                        </Border>
+                                                                                    </DataTemplate>
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                        <!-- 5. Calculator -->
+                                                                        <DataTrigger Binding="{Binding Name}" Value="Calculator">
+                                                                            <Setter Property="ContentTemplate">
+                                                                                <Setter.Value>
+                                                                                    <DataTemplate>
+                                                                                        <Border Width="42" Height="42" CornerRadius="10" BorderBrush="#50FED7AA" BorderThickness="1.2">
+                                                                                            <Border.Background>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                                                    <GradientStop Color="#F97316" Offset="0" />
+                                                                                                    <GradientStop Color="#EA580C" Offset="1" />
+                                                                                                </LinearGradientBrush>
+                                                                                            </Border.Background>
+                                                                                            <Path Data="M 6,7 L 11,7 M 8.5,4.5 L 8.5,9.5 M 15,7 L 20,7 M 6,17 L 11,17 M 6,19.5 L 11,19.5 M 15,15 L 20,20 M 20,15 L 15,20"
+                                                                                                  Stroke="#FFFFFF" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                                        </Border>
+                                                                                    </DataTemplate>
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                        <!-- 6. Settings -->
+                                                                        <DataTrigger Binding="{Binding Name}" Value="Settings">
+                                                                            <Setter Property="ContentTemplate">
+                                                                                <Setter.Value>
+                                                                                    <DataTemplate>
+                                                                                        <Border Width="42" Height="42" CornerRadius="10" BorderBrush="#5094A3B8" BorderThickness="1.2">
+                                                                                            <Border.Background>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                                                    <GradientStop Color="#475569" Offset="0" />
+                                                                                                    <GradientStop Color="#334155" Offset="1" />
+                                                                                                </LinearGradientBrush>
+                                                                                            </Border.Background>
+                                                                                            <Canvas Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                                                <Ellipse Width="16" Height="16" Stroke="#FFFFFF" StrokeThickness="1.5" Canvas.Left="1" Canvas.Top="1" />
+                                                                                                <Ellipse Width="6" Height="6" Stroke="#FFFFFF" StrokeThickness="1.5" Canvas.Left="6" Canvas.Top="6" />
+                                                                                                <Path Data="M 9,0 L 9,3 M 9,15 L 9,18 M 0,9 L 3,9 M 15,9 L 18,9 M 2.5,2.5 L 4.5,4.5 M 13.5,13.5 L 15.5,15.5 M 2.5,15.5 L 4.5,13.5 M 13.5,4.5 L 15.5,2.5"
+                                                                                                      Stroke="#FFFFFF" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                                                            </Canvas>
+                                                                                        </Border>
+                                                                                    </DataTemplate>
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ContentControl.Style>
+                                                        </ContentControl>
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="11"
                                                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextPrimaryBrush}"
                                                                    HorizontalAlignment="Center" />
                                                         <TextBlock Text="{Binding Path}" FontSize="9"
                                                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextSecondaryBrush}"
-                                                                   HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="120" />
+                                                                   HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="120" Margin="0,1,0,0" />
                                                     </StackPanel>
                                                 </Button>
                                             </Border>

@@ -777,6 +777,9 @@ public class MainViewModel : INotifyPropertyChanged
     // Apple Notch Nook Calendar Day Strip (Image 2)
     public ObservableCollection<CalendarDayItem> CalendarDays { get; } = new();
     public string CurrentMonthName => DateTime.Now.ToString("MMM");
+    public string CurrentMonthYear => DateTime.Now.ToString("MMMM yyyy").ToUpper();
+    public string CurrentDayDateFull => DateTime.Now.ToString("dddd, MMM d");
+    public string CurrentDayOfWeekShort => DateTime.Now.ToString("ddd").ToUpper();
     private string _calendarStatus = "Nothing for today — Focus Mode Ready";
     public string CalendarStatus
     {

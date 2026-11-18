@@ -233,10 +233,8 @@ public partial class MainWindow : Window
         }
 
         double satLeft = (targetW / 2.0) + 12.0;
-        bool isDocked = Top <= 2;
-        CornerRadius radius = isDocked
-            ? new CornerRadius(0, 0, targetRadius, targetRadius)
-            : new CornerRadius(targetRadius);
+        // Always maintain Apple smooth organic capsule curvature (zero sharp corners or shadow artifacts)
+        CornerRadius radius = new CornerRadius(targetRadius);
 
         if (isInitial)
         {
@@ -369,11 +367,7 @@ public partial class MainWindow : Window
 
         IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
         IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
-
-        bool isDocked = Top <= 2;
-        IslandContainer.CornerRadius = isDocked
-            ? new CornerRadius(0, 0, targetRadius, targetRadius)
-            : new CornerRadius(targetRadius);
+        IslandContainer.CornerRadius = new CornerRadius(targetRadius);
 
         if (ExpandedViewTranslate != null)
         {
@@ -732,10 +726,7 @@ public partial class MainWindow : Window
             currentRadius = 17;
         }
 
-        bool isDocked = Top <= 2;
-        IslandContainer.CornerRadius = isDocked
-            ? new CornerRadius(0, 0, currentRadius, currentRadius)
-            : new CornerRadius(currentRadius);
+        IslandContainer.CornerRadius = new CornerRadius(currentRadius);
     }
 
     public void ToggleIsland()
