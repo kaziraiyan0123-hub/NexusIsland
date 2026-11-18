@@ -274,7 +274,7 @@
                                 <RepeatButton Command="Slider.DecreaseLarge">
                                     <RepeatButton.Template>
                                         <ControlTemplate>
-                                            <Border Height="6" CornerRadius="3" Background="#007AFF" />
+                                            <Border Height="6" CornerRadius="3" Background="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.AccentBrush}" />
                                         </ControlTemplate>
                                     </RepeatButton.Template>
                                 </RepeatButton>

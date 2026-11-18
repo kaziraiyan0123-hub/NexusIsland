@@ -18,6 +18,7 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="{x:Null}"
+        BorderThickness="0"
         Topmost="{Binding AlwaysOnTop}"
         ShowInTaskbar="False"
         WindowStartupLocation="Manual"
@@ -50,12 +51,12 @@
         <Border x:Name="IslandContainer"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Top"
-                Width="380" Height="44"
+                Width="210" Height="34"
                 Opacity="{Binding IslandOpacity}"
                 Background="{Binding CurrentTheme.BackgroundGradient}"
                 BorderBrush="{Binding CurrentTheme.BorderGradient}"
-                BorderThickness="1.5"
-                CornerRadius="22"
+                BorderThickness="1"
+                CornerRadius="17"
                 ClipToBounds="True"
                 AllowDrop="True"
                 Drop="IslandContainer_Drop"
@@ -95,30 +96,6 @@
                 </Border.RenderTransformOrigin>
 
                 <Grid x:Name="ContentRoot" Background="{x:Null}">
-                    <!-- Glass Specular Hairline Chamfer at Top Edge -->
-                    <Border VerticalAlignment="Top" Height="1.5" Margin="16,0,16,0" CornerRadius="1"
-                            Opacity="0.75" IsHitTestVisible="False">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="#00FFFFFF" Offset="0.0" />
-                                <GradientStop Color="#60FFFFFF" Offset="0.25" />
-                                <GradientStop Color="#B0FFFFFF" Offset="0.5" />
-                                <GradientStop Color="#60FFFFFF" Offset="0.75" />
-                                <GradientStop Color="#00FFFFFF" Offset="1.0" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                    </Border>
-
-                    <!-- Frosted Glass Upper Curved Reflection Sheen -->
-                    <Border VerticalAlignment="Top" Height="32" CornerRadius="22,22,0,0" IsHitTestVisible="False" Opacity="0.07">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#FFFFFF" Offset="0.0" />
-                                <GradientStop Color="#00FFFFFF" Offset="1.0" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                    </Border>
-
                     <!-- ================= 1. COMPACT PILL MODE ================= -->
                     <Grid x:Name="CompactView"
                           Opacity="1.0"
@@ -437,12 +414,10 @@
                                   TouchMove="Scrubber_TouchMove"
                                   TouchUp="Scrubber_TouchUp">
                                 <Border Height="4" CornerRadius="2" Background="#35FFFFFF" ClipToBounds="True" VerticalAlignment="Center">
-                                    <Border HorizontalAlignment="Stretch" CornerRadius="2" Background="{Binding CurrentTheme.AccentGradient}"
-                                            RenderTransformOrigin="0, 0.5">
-                                        <Border.RenderTransform>
-                                            <ScaleTransform ScaleX="{Binding MediaProgressFraction}" />
-                                        </Border.RenderTransform>
-                                    </Border>
+                                    <Border HorizontalAlignment="Left" CornerRadius="2" Height="4"
+                                            Width="{Binding MediaProgressWidth}"
+                                            Background="{Binding CurrentTheme.AccentGradient}"
+                                            Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </Border>
                             </Grid>
                             <TextBlock Grid.Column="2" Text="{Binding MediaRemainingText}" Foreground="#8E8E93"
@@ -995,15 +970,10 @@
                                             <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,10,0" Background="#18FFFFFF" CornerRadius="14"
                                                     BorderBrush="#25FFFFFF" BorderThickness="1">
                                                 <Canvas Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <!-- Apple Sun Core & Radiant Ray Vector -->
                                                     <Ellipse Width="5.5" Height="5.5" Canvas.Left="4.25" Canvas.Top="4.25" Fill="#FFD60A" />
-                                                    <Line X1="7" Y1="0.5" X2="7" Y2="2.5" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
-                                                    <Line X1="7" Y1="11.5" X2="7" Y2="13.5" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
-                                                    <Line X1="0.5" Y1="7" X2="2.5" Y2="7" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
-                                                    <Line X1="11.5" Y1="7" X2="13.5" Y2="7" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
-                                                    <Line X1="2.4" Y1="2.4" X2="3.8" Y2="3.8" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
-                                                    <Line X1="10.2" Y1="10.2" X2="11.6" Y2="11.6" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
-                                                    <Line X1="11.6" Y1="2.4" X2="10.2" Y2="3.8" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
-                                                    <Line X1="3.8" Y1="10.2" X2="2.4" Y2="11.6" Stroke="#FFD60A" StrokeThickness="1.4" StrokeStartLineCap="Round" />
+                                                    <Path Data="M 7,0.5 L 7,2.5 M 7,11.5 L 7,13.5 M 0.5,7 L 2.5,7 M 11.5,7 L 13.5,7 M 2.4,2.4 L 3.8,3.8 M 10.2,10.2 L 11.6,11.6 M 11.6,2.4 L 10.2,3.8 M 3.8,10.2 L 2.4,11.6"
+                                                          Stroke="#FFD60A" StrokeThickness="1.3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                 </Canvas>
                                             </Border>
                                             <Slider Grid.Column="1" Style="{StaticResource HudSlider}"
@@ -2120,7 +2090,7 @@
                     RenderTransformOrigin="0.5, 0.5"
                     Background="{Binding CurrentTheme.BackgroundGradient}"
                     BorderBrush="{Binding CurrentTheme.BorderGradient}"
-                    BorderThickness="1.5"
+                    BorderThickness="1"
                     Visibility="{Binding IsSatelliteVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                     PreviewMouseDown="SatelliteBubble_PreviewMouseDown"
                     MouseEnter="SatelliteBubble_MouseEnter"

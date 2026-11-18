@@ -92,11 +92,11 @@ public class IslandTheme
             StartPoint = new Point(0, 0),
             EndPoint = new Point(1, 1)
         };
-        // 3D Luminous Chromatic Refraction Rim (Brilliant white top chamfer + radiant theme color edges)
-        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(245, 255, 255, 255), 0.0));
-        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(215, accent.R, accent.G, accent.B), 0.26));
-        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(185, secondaryAccent.R, secondaryAccent.G, secondaryAccent.B), 0.74));
-        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(120, 255, 255, 255), 1.0));
+        // Apple Obsidian Micro-Rim (Refined, subtle, seamless blending with screen)
+        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(50, 255, 255, 255), 0.0));
+        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(65, accent.R, accent.G, accent.B), 0.35));
+        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(55, secondaryAccent.R, secondaryAccent.G, secondaryAccent.B), 0.70));
+        borderGrad.GradientStops.Add(new GradientStop(Color.FromArgb(30, 255, 255, 255), 1.0));
         borderGrad.Freeze();
 
         return new IslandTheme

@@ -777,7 +777,9 @@ public class MainViewModel : INotifyPropertyChanged
     public double MediaProgressFraction => Media.Duration.TotalSeconds > 0
         ? Math.Clamp(Media.Position.TotalSeconds / Media.Duration.TotalSeconds, 0.0, 1.0)
         : 0.0;
-    public double MediaProgressWidth => Math.Max(2.0, (MediaProgressPercent / 100.0) * 260.0);
+    public double MediaProgressWidth => (Media.Duration.TotalSeconds > 0 && Media.Position.TotalSeconds > 0)
+        ? Math.Clamp((Media.Position.TotalSeconds / Media.Duration.TotalSeconds) * 260.0, 0.0, 260.0)
+        : 0.0;
 
     private static string FormatDuration(TimeSpan ts)
     {
