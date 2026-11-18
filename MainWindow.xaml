@@ -57,7 +57,10 @@
                 BorderThickness="1.5"
                 CornerRadius="22"
                 ClipToBounds="True"
-                Effect="{StaticResource IslandShadow}"
+                AllowDrop="True"
+                Drop="IslandContainer_Drop"
+                DragEnter="IslandContainer_DragEnter"
+                DragLeave="IslandContainer_DragLeave"
                 MouseEnter="IslandContainer_MouseEnter"
                 MouseLeave="IslandContainer_MouseLeave"
                 PreviewMouseWheel="IslandContainer_PreviewMouseWheel">
@@ -158,11 +161,25 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Clock Display (Shows when media NOT playing) -->
-                            <TextBlock Text="{Binding CurrentTime}" Foreground="#FFFFFF"
-                                       FontWeight="SemiBold" FontSize="12" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
-                                       VerticalAlignment="Center"
-                                       Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                            <!-- Clock Display (Shows when media NOT playing) - Interactive: Click to toggle 12h/24h -->
+                            <Button Command="{Binding ToggleClockFormatCommand}"
+                                    Cursor="Hand"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    ToolTip="{Binding ClockFormatStatusText, StringFormat='Clock: {0} (Click to toggle)'}"
+                                    Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="Transparent">
+                                            <ContentPresenter />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <TextBlock Text="{Binding CurrentTime}" Foreground="#FFFFFF"
+                                           FontWeight="SemiBold" FontSize="12" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                           VerticalAlignment="Center" />
+                            </Button>
                         </StackPanel>
 
                         <!-- Center: Live Now Playing Marquee or Notification Banner -->
@@ -211,38 +228,52 @@
                                 <Border Width="2.5" Height="{Binding EqBar6}" Background="{Binding CurrentTheme.AccentGradient}" CornerRadius="1.25" Margin="1,0" VerticalAlignment="Bottom" />
                             </StackPanel>
 
-                            <!-- Apple Battery Indicator (When Music NOT Playing) -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                        Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                <!-- Apple-Style Battery Pill with Terminal Pip -->
-                                <Grid Margin="0,0,5,0" VerticalAlignment="Center">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="22" />
-                                        <ColumnDefinition Width="2" />
-                                    </Grid.ColumnDefinitions>
-                                    <!-- Main Battery Body -->
-                                    <Border Grid.Column="0" Width="22" Height="11" CornerRadius="3"
-                                            BorderBrush="#8E8E93" BorderThickness="1" Padding="1.5">
-                                        <Grid>
-                                            <Border HorizontalAlignment="Left" CornerRadius="1.5"
-                                                    Width="{Binding BatteryWidth}"
-                                                    Background="{Binding BatteryBrush}" />
-                                            <TextBlock Text="⚡" FontSize="7.5" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                       Foreground="#FFFFFF" FontWeight="Bold"
-                                                       Visibility="{Binding Battery.IsCharging, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                        </Grid>
-                                    </Border>
-                                    <!-- Right Positive Terminal Pip -->
-                                    <Border Grid.Column="1" Width="1.5" Height="4" CornerRadius="0,1,1,0"
-                                            Background="#8E8E93" VerticalAlignment="Center" />
-                                </Grid>
+                            <!-- Apple Battery Indicator (When Music NOT Playing) - Interactive: Click for Power & Battery Saver -->
+                            <Button Command="{Binding BatteryClickCommand}"
+                                    Cursor="Hand"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    ToolTip="Click to open Power &amp; Battery Saver settings"
+                                    Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="Transparent">
+                                            <ContentPresenter />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <!-- Apple-Style Battery Pill with Terminal Pip -->
+                                    <Grid Margin="0,0,5,0" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="22" />
+                                            <ColumnDefinition Width="2" />
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Main Battery Body -->
+                                        <Border Grid.Column="0" Width="22" Height="11" CornerRadius="3"
+                                                BorderBrush="#8E8E93" BorderThickness="1" Padding="1.5">
+                                            <Grid>
+                                                <Border HorizontalAlignment="Left" CornerRadius="1.5"
+                                                        Width="{Binding BatteryWidth}"
+                                                        Background="{Binding BatteryBrush}" />
+                                                <TextBlock Text="⚡" FontSize="7.5" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="#FFFFFF" FontWeight="Bold"
+                                                           Visibility="{Binding Battery.IsCharging, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            </Grid>
+                                        </Border>
+                                        <!-- Right Positive Terminal Pip -->
+                                        <Border Grid.Column="1" Width="1.5" Height="4" CornerRadius="0,1,1,0"
+                                                Background="#8E8E93" VerticalAlignment="Center" />
+                                    </Grid>
 
-                                <!-- Battery Percent Text -->
-                                <TextBlock Text="{Binding BatteryPercent, StringFormat='{}{0}%'}"
-                                           Foreground="#8E8E93" FontSize="10.5" FontWeight="SemiBold"
-                                           FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
-                                           VerticalAlignment="Center" />
-                            </StackPanel>
+                                    <!-- Battery Percent Text -->
+                                    <TextBlock Text="{Binding BatteryPercent, StringFormat='{}{0}%'}"
+                                               Foreground="#8E8E93" FontSize="10.5" FontWeight="SemiBold"
+                                               FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
 
@@ -1023,14 +1054,14 @@
                                             </Button>
                                             <Button Command="{Binding MediaPlayPauseCommand}" Style="{StaticResource HudCircleButton}" Width="34" Height="34" Margin="0,0,6,0"
                                                     BorderBrush="{Binding CurrentTheme.AccentBrush}">
-                                                <Grid Width="12" Height="12">
+                                                <Grid Width="14" Height="14">
                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                 Visibility="{Binding IsMediaPlaying, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <Border Width="2.5" Height="10" CornerRadius="1.25" Background="{Binding CurrentTheme.AccentBrush}" Margin="0,0,3,0" />
-                                                        <Border Width="2.5" Height="10" CornerRadius="1.25" Background="{Binding CurrentTheme.AccentBrush}" />
+                                                        <Border Width="3" Height="11" CornerRadius="1.5" Background="{Binding CurrentTheme.AccentBrush}" Margin="0,0,3,0" />
+                                                        <Border Width="3" Height="11" CornerRadius="1.5" Background="{Binding CurrentTheme.AccentBrush}" />
                                                     </StackPanel>
                                                     <Path Visibility="{Binding IsMediaPlaying, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                                                          Data="M 0,0 L 9,5 L 0,10 Z" Fill="{Binding CurrentTheme.AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="1.5,0,0,0" />
+                                                          Data="M 1,1 L 11,7 L 1,13 Z" Fill="{Binding CurrentTheme.AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0" />
                                                 </Grid>
                                             </Button>
                                             <Button Command="{Binding MediaNextCommand}" Style="{StaticResource HudCircleButton}" Width="28" Height="28">
@@ -1169,8 +1200,26 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding ClipboardSearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource HudTextBox}" Margin="0,0,8,0" Padding="8,5" />
+                                <Grid Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBox Text="{Binding ClipboardSearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                             x:Name="ClipsSearchBox"
+                                             Style="{StaticResource HudTextBox}" Padding="8,5" />
+                                    <TextBlock Text="🔍 Filter clips &amp; files..." IsHitTestVisible="False"
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextSecondaryBrush}"
+                                               FontSize="10.5" VerticalAlignment="Center" Margin="8,0,0,0"
+                                               Opacity="0.65">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=ClipsSearchBox}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
                                 <Button Grid.Column="1" Command="{Binding ClearClipboardHistoryCommand}"
                                         Style="{StaticResource HudPillButton}" Padding="10,5" ToolTip="Clear unpinned clips">
                                     <StackPanel Orientation="Horizontal">
@@ -1252,8 +1301,26 @@
                                     </StackPanel>
                                 </Button>
 
-                                <TextBox Grid.Row="1" Text="{Binding NotesSearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource HudTextBox}" Margin="0,0,0,6" Padding="6,4" FontSize="11" />
+                                <Grid Grid.Row="1" Margin="0,0,0,6">
+                                    <TextBox Text="{Binding NotesSearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                             x:Name="NotesSearchBox"
+                                             Style="{StaticResource HudTextBox}" Padding="8,4" FontSize="11" />
+                                    <TextBlock Text="🔍 Filter notes..." IsHitTestVisible="False"
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextSecondaryBrush}"
+                                               FontSize="10.5" VerticalAlignment="Center" Margin="8,0,0,0"
+                                               Opacity="0.65">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=NotesSearchBox}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
 
                                 <ListBox Grid.Row="2" ItemsSource="{Binding NotesView}" SelectedItem="{Binding SelectedNote}"
                                          Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -1264,10 +1331,14 @@
                                                     BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="0,0,0,4">
                                                 <StackPanel>
                                                     <Grid>
-                                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="11"
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="Bold" FontSize="11"
                                                                    Foreground="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CurrentTheme.TextPrimaryBrush}"
-                                                                   TextTrimming="CharacterEllipsis" MaxWidth="130" />
-                                                        <TextBlock Text="📌" FontSize="9" HorizontalAlignment="Right"
+                                                                   TextTrimming="CharacterEllipsis" Margin="0,0,4,0" />
+                                                        <TextBlock Grid.Column="1" Text="📌" FontSize="10" VerticalAlignment="Center"
                                                                    Visibility="{Binding IsPinned, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                                     </Grid>
                                                     <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM dd, HH:mm}'}"
@@ -1921,15 +1992,24 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="⚙️ SYSTEM INTEGRATION" Foreground="{Binding CurrentTheme.AccentBrush}"
                                                        FontWeight="Bold" FontSize="11" />
-                                            <TextBlock Text="Boot startup — Audio cues — Auto-collapse — Satellite bubble"
+                                            <TextBlock Text="Boot startup — Clock format — Audio cues — Auto-collapse"
                                                        Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" />
                                         </StackPanel>
 
-                                        <Button Grid.Column="1" Command="{Binding ToggleLaunchOnStartupCommand}"
+                                        <Button Grid.Column="1" Command="{Binding ToggleClockFormatCommand}"
+                                                Style="{StaticResource HudPillButton}" Margin="0,0,6,0" Padding="8,5" ToolTip="Toggle 12-Hour AM/PM or 24-Hour Military Format">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🕒 " FontSize="10" />
+                                                <TextBlock Text="{Binding ClockFormatStatusText}" FontSize="10" FontWeight="SemiBold" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Grid.Column="2" Command="{Binding ToggleLaunchOnStartupCommand}"
                                                 Style="{StaticResource HudPillButton}" Margin="0,0,6,0" Padding="8,5" ToolTip="Start when Windows turns on">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="🚀 " FontSize="10" />
@@ -1937,7 +2017,7 @@
                                             </StackPanel>
                                         </Button>
 
-                                        <Button Grid.Column="2" Command="{Binding ToggleSoundEffectsCommand}"
+                                        <Button Grid.Column="3" Command="{Binding ToggleSoundEffectsCommand}"
                                                 Style="{StaticResource HudPillButton}" Margin="0,0,6,0" Padding="8,5" ToolTip="Toggle sound effects">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="🔊 " FontSize="10" />
@@ -1945,7 +2025,7 @@
                                             </StackPanel>
                                         </Button>
 
-                                        <Button Grid.Column="3" Command="{Binding ToggleTestSatelliteCommand}"
+                                        <Button Grid.Column="4" Command="{Binding ToggleTestSatelliteCommand}"
                                                 Style="{StaticResource HudPillButton}" Margin="0,0,6,0" Padding="8,5" ToolTip="Preview Apple Satellite Multi-task Bubble">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="✦ " FontSize="10" />
@@ -1953,7 +2033,7 @@
                                             </StackPanel>
                                         </Button>
 
-                                        <Button Grid.Column="4" Command="{Binding ResetPositionCommand}"
+                                        <Button Grid.Column="5" Command="{Binding ResetPositionCommand}"
                                                 Style="{StaticResource HudPillButton}" Padding="8,5" ToolTip="Reset to screen center">
                                             <TextBlock Text="⌖ Center" FontSize="10" FontWeight="Bold"
                                                        Foreground="{Binding CurrentTheme.TextPrimaryBrush}" />
@@ -2013,7 +2093,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="0" Text="✦ NEXUS ISLAND — Master Windows 11 Companion — Apple Liquid Morph — Satellite HUD"
+                        <TextBlock Grid.Column="0" Text="✦ NEXUS ISLAND • Dynamic Island for Windows • v1.0"
                                    Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" VerticalAlignment="Center" />
 
                         <Button Grid.Column="1" Command="{Binding CollapseCommand}"
@@ -2041,7 +2121,6 @@
                     Background="{Binding CurrentTheme.BackgroundGradient}"
                     BorderBrush="{Binding CurrentTheme.BorderGradient}"
                     BorderThickness="1.5"
-                    Effect="{StaticResource IslandShadow}"
                     Visibility="{Binding IsSatelliteVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                     PreviewMouseDown="SatelliteBubble_PreviewMouseDown"
                     MouseEnter="SatelliteBubble_MouseEnter"

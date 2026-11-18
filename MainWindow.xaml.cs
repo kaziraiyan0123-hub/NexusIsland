@@ -456,6 +456,35 @@ public partial class MainWindow : Window
         }
     }
 
+    private void IslandContainer_DragEnter(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+        {
+            e.Effects = System.Windows.DragDropEffects.Copy;
+            IslandContainer.BorderBrush = ViewModel.CurrentTheme.AccentBrush;
+            e.Handled = true;
+        }
+    }
+
+    private void IslandContainer_DragLeave(object sender, System.Windows.DragEventArgs e)
+    {
+        IslandContainer.BorderBrush = ViewModel.CurrentTheme.BorderGradient;
+    }
+
+    private void IslandContainer_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        IslandContainer.BorderBrush = ViewModel.CurrentTheme.BorderGradient;
+        if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+        {
+            string[]? files = e.Data.GetData(System.Windows.DataFormats.FileDrop) as string[];
+            if (files != null && files.Length > 0)
+            {
+                ViewModel.HandleFileDrop(files);
+                e.Handled = true;
+            }
+        }
+    }
+
     // Interactive Apple Scrubber Drag & Touch Seeking
     private bool _isScrubbing;
 

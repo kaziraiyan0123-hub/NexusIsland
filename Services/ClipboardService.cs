@@ -19,6 +19,27 @@ public class ClipboardService
         }
     }
 
+    public void AddFileDrop(string filePath)
+    {
+        try
+        {
+            var existing = History.FirstOrDefault(x => x.Text == filePath);
+            if (existing != null)
+            {
+                History.Remove(existing);
+            }
+            var entry = new ClipboardEntry
+            {
+                Text = filePath,
+                CopiedAt = DateTime.Now,
+                IsPinned = true
+            };
+            History.Insert(0, entry);
+            ClipboardUpdated?.Invoke();
+        }
+        catch { }
+    }
+
     public void OnClipboardUpdated()
     {
         try

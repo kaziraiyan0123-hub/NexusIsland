@@ -49,6 +49,7 @@ public class AppSettings
     public double WeatherLongitude { get; set; } = 0.0;
     public bool SoundEffectsEnabled { get; set; } = false;
     public bool AmbientGlowEnabled { get; set; } = true;
+    public bool Use24HourClock { get; set; } = false;
 
     // Mini Apps Data
     public List<QuickNote> Notes { get; set; } = new();

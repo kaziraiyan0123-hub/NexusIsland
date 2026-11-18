@@ -241,6 +241,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ToggleLaunchOnStartupCommand { get; private set; } = null!;
     public ICommand ToggleSoundEffectsCommand { get; private set; } = null!;
     public ICommand ToggleAmbientGlowCommand { get; private set; } = null!;
+    public ICommand ToggleClockFormatCommand { get; private set; } = null!;
+    public ICommand BatteryClickCommand { get; private set; } = null!;
     public ICommand ApplyCustomAccentCommand { get; private set; } = null!;
 
     // Island State
@@ -580,8 +582,30 @@ public class MainViewModel : INotifyPropertyChanged
 
     private DispatcherTimer? _notificationDismissTimer;
 
-    // Telemetry: Time & Date
-    public string CurrentTime => DateTime.Now.ToString("HH:mm");
+    // Telemetry: Time & Date (Customizable 12-Hour AM/PM or 24-Hour Military Format)
+    private bool _use24HourClock;
+    public bool Use24HourClock
+    {
+        get => _use24HourClock;
+        set
+        {
+            if (_use24HourClock != value)
+            {
+                _use24HourClock = value;
+                Settings.Use24HourClock = value;
+                SettingsManager.Save(Settings);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CurrentTime));
+                OnPropertyChanged(nameof(ClockFormatStatusText));
+            }
+        }
+    }
+
+    public string CurrentTime => Use24HourClock
+        ? DateTime.Now.ToString("HH:mm")
+        : DateTime.Now.ToString("h:mm tt");
+
+    public string ClockFormatStatusText => Use24HourClock ? "24-Hour (Military)" : "12-Hour (AM/PM)";
     public string CurrentDate => DateTime.Now.ToString("ddd, MMM dd");
 
     // Telemetry: Battery
@@ -957,11 +981,26 @@ public class MainViewModel : INotifyPropertyChanged
         _islandScale = Settings.IslandScale;
         _islandOpacity = Settings.IslandOpacity;
         _customAccentHex = Settings.CustomAccentHex;
+        _use24HourClock = Settings.Use24HourClock;
 
         ToggleLaunchOnStartupCommand = new RelayCommand(() => LaunchOnStartup = !LaunchOnStartup);
         ToggleSoundEffectsCommand = new RelayCommand(() => SoundEffectsEnabled = !SoundEffectsEnabled);
         ToggleAmbientGlowCommand = new RelayCommand(() => AmbientGlowEnabled = !AmbientGlowEnabled);
         ApplyCustomAccentCommand = new RelayCommand(() => ApplyTheme(ThemePreset.Custom));
+
+        ToggleClockFormatCommand = new RelayCommand(() =>
+        {
+            Use24HourClock = !Use24HourClock;
+            ShowNotification("Clock Format ⏱️", $"Switched to {ClockFormatStatusText}", "🕒");
+            SoundService.PlayClick();
+        });
+
+        BatteryClickCommand = new RelayCommand(() =>
+        {
+            QuickControls.OpenBatterySaver();
+            ShowNotification("Battery Telemetry ⚡", $"{BatteryPercent}% • {Battery.StatusText}", "🔋");
+            SoundService.PlayClick();
+        });
 
         // Base Commands
         ToggleExpandCommand = new RelayCommand(() => IsExpanded = !IsExpanded);
@@ -1519,6 +1558,29 @@ public class MainViewModel : INotifyPropertyChanged
             ClipboardService.OnClipboardUpdated();
             ClipboardView?.Refresh();
         });
+    }
+
+    public void HandleFileDrop(string[] filePaths)
+    {
+        if (filePaths == null || filePaths.Length == 0) return;
+        try
+        {
+            int count = filePaths.Length;
+            string firstPath = filePaths[0];
+            string fileName = System.IO.Path.GetFileName(firstPath);
+
+            foreach (var path in filePaths)
+            {
+                ClipboardService.AddFileDrop(path);
+            }
+            ClipboardView?.Refresh();
+
+            string title = count == 1 ? $"Shelf: {fileName}" : $"Shelf: {count} Files Staged";
+            string sub = count == 1 ? $"{firstPath}" : $"{fileName} and {count - 1} more staged to Clips";
+            ShowNotification(title, sub, "📂");
+            SoundService.PlayClick();
+        }
+        catch { }
     }
 
     public void ShowNotification(string title, string message, string icon = "🔔")
