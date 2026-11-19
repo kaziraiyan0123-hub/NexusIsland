@@ -22,8 +22,8 @@
         Topmost="{Binding AlwaysOnTop}"
         ShowInTaskbar="False"
         WindowStartupLocation="Manual"
-        Width="740"
-        Height="620"
+        Width="780"
+        Height="660"
         ResizeMode="NoResize">
 
     <Window.DataContext>
@@ -31,17 +31,18 @@
     </Window.DataContext>
 
     <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0" Background="{x:Null}">
-        <!-- Organic Liquid Glass Ambient Bloom (Perfect Capsule Contour, Zero Rectangular Clipping) -->
+        <!-- Organic Liquid Glass Ambient Bloom (Concentric Capsule Contour, Ultra-Radiant Zero-Clip Aura) -->
         <Border x:Name="AmbientGlowBorder"
                 HorizontalAlignment="Center" VerticalAlignment="Top"
-                Width="210" Height="34"
-                CornerRadius="17"
+                Width="246" Height="70"
+                Margin="0,-18,0,0"
+                CornerRadius="35"
                 Visibility="{Binding AmbientGlowVisibility}"
-                Background="{Binding CurrentTheme.AccentGradient}"
+                Background="{Binding CurrentTheme.AccentBrush}"
                 Opacity="{Binding AmbientBloomOpacity}"
                 IsHitTestVisible="False">
             <Border.Effect>
-                <BlurEffect Radius="22" RenderingBias="Performance" />
+                <BlurEffect Radius="{Binding AmbientGlowBlur}" RenderingBias="Performance" />
             </Border.Effect>
         </Border>
 
@@ -830,8 +831,8 @@
                                       Visibility="{Binding IsQuickControlsTab, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <StackPanel Margin="0,0,4,0">
 
-                                <!-- Quick Action Tiles Grid (8 Modern Vector Tiles) -->
-                                <UniformGrid Columns="4" Rows="2" Margin="0,0,0,8">
+                                <!-- Quick Action Tiles Grid (9 Modern Vector Tiles in 3x3 Grid) -->
+                                <UniformGrid Columns="3" Rows="3" Margin="0,0,0,8">
                                     <!-- 1. Wi-Fi -->
                                     <Button Command="{Binding WifiCommand}" Style="{StaticResource HudTileButton}" Margin="3">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -862,6 +863,24 @@
                                             <StackPanel VerticalAlignment="Center">
                                                 <TextBlock Text="Bluetooth" FontWeight="SemiBold" FontSize="11" />
                                                 <TextBlock Text="Devices" FontSize="9" Foreground="{Binding CurrentTheme.TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- 3. Ambient Glow Aura -->
+                                    <Button Command="{Binding ToggleAmbientGlowCommand}" Style="{StaticResource HudTileButton}" Margin="3"
+                                            ToolTip="Toggle Apple Ambient Bloom Glow Aura">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Border Width="26" Height="26" CornerRadius="7" Background="#18FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="0.8" Margin="0,0,6,0">
+                                                <Canvas Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Path Data="M 8,1 Q 8,8 1,8 Q 8,8 8,15 Q 8,8 15,8 Q 8,8 8,1 Z"
+                                                          Fill="{Binding CurrentTheme.AccentBrush}" />
+                                                    <Ellipse Width="3.2" Height="3.2" Fill="#FFFFFF" Canvas.Left="6.4" Canvas.Top="6.4" />
+                                                </Canvas>
+                                            </Border>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Ambient Glow" FontWeight="SemiBold" FontSize="11" />
+                                                <TextBlock Text="{Binding AmbientGlowToggleText}" FontSize="9" FontWeight="Bold" Foreground="{Binding CurrentTheme.AccentBrush}" />
                                             </StackPanel>
                                         </StackPanel>
                                     </Button>
@@ -2009,6 +2028,59 @@
                                             <TextBlock Grid.Column="0" Text="Opacity" Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontSize="11" VerticalAlignment="Center" />
                                             <Slider Grid.Column="1" Minimum="0.70" Maximum="1.0" Value="{Binding IslandOpacity, Mode=TwoWay}" Style="{StaticResource HudSlider}" />
                                             <TextBlock Grid.Column="2" Text="{Binding IslandOpacity, StringFormat='{}{0:P0}'}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                       FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Ambient Bloom Glow Customization Card -->
+                                <Border Background="{Binding CurrentTheme.CardGradient}"
+                                        CornerRadius="12" Padding="14,12" Margin="0,0,0,8"
+                                        BorderBrush="{Binding CurrentTheme.BorderBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="✨ AMBIENT BLOOM &amp; GLOW AURA" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                           FontWeight="Bold" FontSize="11.5" />
+                                                <TextBlock Text="Liquid glass atmospheric halo • Audio-reactive dynamic bloom"
+                                                           Foreground="{Binding CurrentTheme.TextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Command="{Binding ToggleAmbientGlowCommand}"
+                                                    Style="{StaticResource HudPillButton}" Padding="12,6"
+                                                    ToolTip="Toggle Ambient Bloom Glow ON/OFF">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="✨ " FontSize="11" />
+                                                    <TextBlock Text="{Binding AmbientGlowStatusText}" FontSize="11" FontWeight="Bold"
+                                                               Foreground="{Binding CurrentTheme.AccentBrush}" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+
+                                        <!-- Sliders for Intensity and Spread -->
+                                        <Grid Margin="0,4,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="50" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Glow Brightness" Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                                            <Slider Grid.Column="1" Minimum="0.20" Maximum="1.0" Value="{Binding AmbientGlowIntensity, Mode=TwoWay}" Style="{StaticResource HudSlider}" />
+                                            <TextBlock Grid.Column="2" Text="{Binding AmbientGlowIntensity, StringFormat='{}{0:P0}'}" Foreground="{Binding CurrentTheme.AccentBrush}"
+                                                       FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="50" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Aura Spread" Foreground="{Binding CurrentTheme.TextPrimaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                                            <Slider Grid.Column="1" Minimum="12" Maximum="32" Value="{Binding AmbientGlowSpread, Mode=TwoWay}" Style="{StaticResource HudSlider}" />
+                                            <TextBlock Grid.Column="2" Text="{Binding AmbientGlowSpread, StringFormat='{}{0:0}px'}" Foreground="{Binding CurrentTheme.AccentBrush}"
                                                        FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                         </Grid>
                                     </StackPanel>

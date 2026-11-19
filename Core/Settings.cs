@@ -49,6 +49,8 @@ public class AppSettings
     public double WeatherLongitude { get; set; } = 0.0;
     public bool SoundEffectsEnabled { get; set; } = false;
     public bool AmbientGlowEnabled { get; set; } = true;
+    public double AmbientGlowIntensity { get; set; } = 0.75;
+    public double AmbientGlowSpread { get; set; } = 20.0;
     public bool Use24HourClock { get; set; } = false;
 
     // Mini Apps Data

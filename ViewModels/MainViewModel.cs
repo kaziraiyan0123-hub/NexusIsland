@@ -182,12 +182,51 @@ public class MainViewModel : INotifyPropertyChanged
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(AmbientGlowVisibility));
                 OnPropertyChanged(nameof(AmbientGlowStatusText));
+                OnPropertyChanged(nameof(AmbientGlowToggleText));
                 OnPropertyChanged(nameof(AmbientBloomOpacity));
             }
         }
     }
     public Visibility AmbientGlowVisibility => AmbientGlowEnabled ? Visibility.Visible : Visibility.Collapsed;
     public string AmbientGlowStatusText => AmbientGlowEnabled ? "Ambient Glow: ON" : "Ambient Glow: OFF";
+    public string AmbientGlowToggleText => AmbientGlowEnabled ? "ON" : "OFF";
+
+    private double _ambientGlowIntensity = 0.75;
+    public double AmbientGlowIntensity
+    {
+        get => _ambientGlowIntensity;
+        set
+        {
+            double clamped = Math.Clamp(Math.Round(value, 2), 0.1, 1.0);
+            if (Math.Abs(_ambientGlowIntensity - clamped) > 0.001)
+            {
+                _ambientGlowIntensity = clamped;
+                Settings.AmbientGlowIntensity = clamped;
+                SettingsManager.Save(Settings);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AmbientBloomOpacity));
+            }
+        }
+    }
+
+    private double _ambientGlowSpread = 20.0;
+    public double AmbientGlowSpread
+    {
+        get => _ambientGlowSpread;
+        set
+        {
+            double clamped = Math.Clamp(Math.Round(value, 0), 10.0, 35.0);
+            if (Math.Abs(_ambientGlowSpread - clamped) > 0.001)
+            {
+                _ambientGlowSpread = clamped;
+                Settings.AmbientGlowSpread = clamped;
+                SettingsManager.Save(Settings);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AmbientGlowBlur));
+                RequestModeResize?.Invoke(ExpandedMode);
+            }
+        }
+    }
 
     private double _islandScale = 1.0;
     public double IslandScale
@@ -856,6 +895,7 @@ public class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(EqBar5));
             OnPropertyChanged(nameof(EqBar6));
             OnPropertyChanged(nameof(AmbientBloomOpacity));
+            OnPropertyChanged(nameof(AmbientGlowBlur));
             OnPropertyChanged(nameof(AmbientBloomBlur));
         }
     }
@@ -865,10 +905,18 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             if (!AmbientGlowEnabled) return 0.0;
-            return Media.IsPlaying ? Math.Clamp(0.40 + AudioPeak * 0.35, 0.40, 0.85) : 0.45;
+            double baseOpacity = _ambientGlowIntensity;
+            if (Media.IsPlaying)
+            {
+                return Math.Clamp(baseOpacity * 0.85 + AudioPeak * 0.40, 0.35, 1.0);
+            }
+            return baseOpacity;
         }
     }
-    public double AmbientBloomBlur => Media.IsPlaying ? Math.Clamp(20.0 + AudioPeak * 12.0, 20.0, 32.0) : 24.0;
+    public double AmbientGlowBlur => Media.IsPlaying
+        ? Math.Clamp(_ambientGlowSpread * 1.5 + AudioPeak * 10.0, 18.0, 52.0)
+        : _ambientGlowSpread * 1.5;
+    public double AmbientBloomBlur => AmbientGlowBlur;
 
     public double EqBar1 => Media.IsPlaying ? Math.Clamp(AudioPeak * 14.0 + 3.5 + 3.0 * Math.Sin(_wavePhase * 1.2), 3.0, 18.0) : 0.0;
     public double EqBar2 => Media.IsPlaying ? Math.Clamp(AudioPeak * 18.0 + 5.0 + 5.0 * Math.Cos(_wavePhase * 1.5), 4.0, 20.0) : 0.0;
@@ -988,6 +1036,8 @@ public class MainViewModel : INotifyPropertyChanged
         _soundEffectsEnabled = Settings.SoundEffectsEnabled;
         SoundService.Enabled = _soundEffectsEnabled;
         _ambientGlowEnabled = Settings.AmbientGlowEnabled;
+        _ambientGlowIntensity = Settings.AmbientGlowIntensity > 0.05 ? Settings.AmbientGlowIntensity : 0.75;
+        _ambientGlowSpread = Settings.AmbientGlowSpread >= 10.0 ? Settings.AmbientGlowSpread : 20.0;
         _islandScale = Settings.IslandScale;
         _islandOpacity = Settings.IslandOpacity;
         _customAccentHex = Settings.CustomAccentHex;
@@ -995,7 +1045,12 @@ public class MainViewModel : INotifyPropertyChanged
 
         ToggleLaunchOnStartupCommand = new RelayCommand(() => LaunchOnStartup = !LaunchOnStartup);
         ToggleSoundEffectsCommand = new RelayCommand(() => SoundEffectsEnabled = !SoundEffectsEnabled);
-        ToggleAmbientGlowCommand = new RelayCommand(() => AmbientGlowEnabled = !AmbientGlowEnabled);
+        ToggleAmbientGlowCommand = new RelayCommand(() =>
+        {
+            AmbientGlowEnabled = !AmbientGlowEnabled;
+            ShowNotification("Ambient Glow ✨", AmbientGlowEnabled ? "Radiant Halo Aura Active" : "Ambient Glow Disabled", "✨");
+            SoundService.PlayClick();
+        });
         ApplyCustomAccentCommand = new RelayCommand(() => ApplyTheme(ThemePreset.Custom));
 
         ToggleClockFormatCommand = new RelayCommand(() =>

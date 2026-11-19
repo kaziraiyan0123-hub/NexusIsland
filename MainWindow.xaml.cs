@@ -62,6 +62,7 @@ public partial class MainWindow : Window
 
         Left = defaultLeft;
         Top = defaultTop;
+        UpdateDockedCornerRadius();
     }
 
     private void CenterOnScreen()
@@ -69,6 +70,7 @@ public partial class MainWindow : Window
         var workArea = SystemParameters.WorkArea;
         Left = workArea.Left + (workArea.Width - Width) / 2;
         Top = workArea.Top;
+        UpdateDockedCornerRadius();
         ViewModel.SavePosition(Left, Top);
     }
 
@@ -220,12 +222,7 @@ public partial class MainWindow : Window
             IslandContainer.Width = targetW;
             IslandContainer.Height = targetH;
             IslandContainer.CornerRadius = radius;
-            if (AmbientGlowBorder != null)
-            {
-                AmbientGlowBorder.Width = targetW;
-                AmbientGlowBorder.Height = targetH;
-                AmbientGlowBorder.CornerRadius = radius;
-            }
+            UpdateAmbientGlow(targetW, targetH, targetRadius);
             CompactView.Visibility = isExpanded ? Visibility.Collapsed : Visibility.Visible;
             CompactView.Opacity = isExpanded ? 0.0 : 1.0;
             ExpandedView.Visibility = isExpanded ? Visibility.Visible : Visibility.Collapsed;
@@ -246,12 +243,7 @@ public partial class MainWindow : Window
         IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
         IslandContainer.CornerRadius = radius;
 
-        if (AmbientGlowBorder != null)
-        {
-            AmbientGlowBorder.BeginAnimation(FrameworkElement.WidthProperty, animW);
-            AmbientGlowBorder.BeginAnimation(FrameworkElement.HeightProperty, animH);
-            AmbientGlowBorder.CornerRadius = radius;
-        }
+        UpdateAmbientGlow(targetW, targetH, targetRadius, duration, easeSpring);
 
         // Apple Jelly Squash & Stretch Effect (Delicate organic elastic deformation)
         if (IslandSpringScale != null)
@@ -350,6 +342,8 @@ public partial class MainWindow : Window
         IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
         IslandContainer.CornerRadius = new CornerRadius(targetRadius);
 
+        UpdateAmbientGlow(targetW, targetH, targetRadius, duration, easeSpring);
+
         if (ExpandedViewTranslate != null)
         {
             var modeSlide = new DoubleAnimation(-4.0, 0.0, new Duration(TimeSpan.FromMilliseconds(220)))
@@ -376,11 +370,7 @@ public partial class MainWindow : Window
             var animH = new DoubleAnimation(36, TimeSpan.FromMilliseconds(200)) { EasingFunction = ease };
             IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
             IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
-            if (AmbientGlowBorder != null)
-            {
-                AmbientGlowBorder.BeginAnimation(FrameworkElement.WidthProperty, animW);
-                AmbientGlowBorder.BeginAnimation(FrameworkElement.HeightProperty, animH);
-            }
+            UpdateAmbientGlow(baseW + 18, 36, 18, TimeSpan.FromMilliseconds(200), ease);
         }
     }
 
@@ -394,11 +384,7 @@ public partial class MainWindow : Window
             var animH = new DoubleAnimation(34, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease };
             IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
             IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
-            if (AmbientGlowBorder != null)
-            {
-                AmbientGlowBorder.BeginAnimation(FrameworkElement.WidthProperty, animW);
-                AmbientGlowBorder.BeginAnimation(FrameworkElement.HeightProperty, animH);
-            }
+            UpdateAmbientGlow(baseW, 34, 17, TimeSpan.FromMilliseconds(220), ease);
         }
     }
 
@@ -667,9 +653,46 @@ public partial class MainWindow : Window
         }
     }
 
+    private void UpdateAmbientGlow(double targetW, double targetH, double targetRadius, TimeSpan? duration = null, IEasingFunction? ease = null)
+    {
+        if (AmbientGlowBorder == null) return;
+
+        double pad = Math.Clamp(ViewModel.AmbientGlowSpread, 12.0, 30.0);
+        bool isDocked = Top <= SystemParameters.WorkArea.Top + 15;
+
+        double glowW = targetW + 2 * pad;
+        double glowH = isDocked ? targetH + pad : targetH + 2 * pad;
+        Thickness targetMargin = isDocked ? new Thickness(0, 0, 0, 0) : new Thickness(0, -pad, 0, 0);
+
+        double cornerR = targetRadius + pad;
+        CornerRadius targetCorner = isDocked
+            ? new CornerRadius(0, 0, cornerR, cornerR)
+            : new CornerRadius(cornerR);
+
+        AmbientGlowBorder.Margin = targetMargin;
+        AmbientGlowBorder.CornerRadius = targetCorner;
+
+        if (duration.HasValue && duration.Value > TimeSpan.Zero)
+        {
+            var animW = new DoubleAnimation(glowW, new Duration(duration.Value)) { EasingFunction = ease };
+            var animH = new DoubleAnimation(glowH, new Duration(duration.Value)) { EasingFunction = ease };
+            AmbientGlowBorder.BeginAnimation(FrameworkElement.WidthProperty, animW);
+            AmbientGlowBorder.BeginAnimation(FrameworkElement.HeightProperty, animH);
+        }
+        else
+        {
+            AmbientGlowBorder.BeginAnimation(FrameworkElement.WidthProperty, null);
+            AmbientGlowBorder.BeginAnimation(FrameworkElement.HeightProperty, null);
+            AmbientGlowBorder.Width = glowW;
+            AmbientGlowBorder.Height = glowH;
+        }
+    }
+
     private void UpdateDockedCornerRadius()
     {
         double currentRadius;
+        double currentW = IslandContainer.ActualWidth > 0 ? IslandContainer.ActualWidth : IslandContainer.Width;
+        double currentH = IslandContainer.ActualHeight > 0 ? IslandContainer.ActualHeight : IslandContainer.Height;
         if (ViewModel.IsExpanded)
         {
             currentRadius = ViewModel.ExpandedMode == IslandExpandedMode.ControlCenter ? 24 : 22;
@@ -679,12 +702,13 @@ public partial class MainWindow : Window
             currentRadius = 17;
         }
 
-        var r = new CornerRadius(currentRadius);
+        bool isDocked = Top <= SystemParameters.WorkArea.Top + 15;
+        CornerRadius r = isDocked
+            ? new CornerRadius(0, 0, currentRadius, currentRadius)
+            : new CornerRadius(currentRadius);
+
         IslandContainer.CornerRadius = r;
-        if (AmbientGlowBorder != null)
-        {
-            AmbientGlowBorder.CornerRadius = r;
-        }
+        UpdateAmbientGlow(currentW, currentH, currentRadius);
     }
 
     public void ToggleIsland()
