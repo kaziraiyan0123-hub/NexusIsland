@@ -281,7 +281,7 @@ public class MainViewModel : INotifyPropertyChanged
     }
     public string TestSatelliteStatusText => TestSatelliteActive ? "Satellite: ON" : "Satellite: OFF";
 
-    public bool IsSatelliteVisible => IsCompact && (FocusIsRunning || (IsMediaPlaying && HasActiveNotification) || TestSatelliteActive);
+    public bool IsSatelliteVisible => false;
 
     public string SatelliteIcon
     {

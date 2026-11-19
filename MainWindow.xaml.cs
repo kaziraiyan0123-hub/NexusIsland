@@ -133,10 +133,6 @@ public partial class MainWindow : Window
 
         // Apply initial visual sizing
         AnimateState(ViewModel.IsExpanded, isInitial: true);
-        if (SatelliteBubble != null)
-        {
-            SatelliteBubble.Visibility = ViewModel.IsSatelliteVisible ? Visibility.Visible : Visibility.Collapsed;
-        }
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -149,7 +145,7 @@ public partial class MainWindow : Window
             return IntPtr.Zero;
         }
 
-        // WM_NCHITTEST: Pass clicks through to windows underneath if outside IslandContainer or SatelliteBubble
+        // WM_NCHITTEST: Pass clicks through to windows underneath if outside IslandContainer
         if (msg == NativeMethods.WM_NCHITTEST)
         {
             int x = (short)(lParam.ToInt32() & 0xFFFF);
@@ -165,19 +161,7 @@ public partial class MainWindow : Window
             }
             catch { }
 
-            bool insideSatellite = false;
-            if (SatelliteBubble != null && SatelliteBubble.Visibility == Visibility.Visible)
-            {
-                try
-                {
-                    Point ptSat = SatelliteBubble.PointFromScreen(ptScreen);
-                    Rect satBounds = new Rect(0, 0, SatelliteBubble.ActualWidth, SatelliteBubble.ActualHeight);
-                    insideSatellite = satBounds.Contains(ptSat);
-                }
-                catch { }
-            }
-
-            if (!insideMain && !insideSatellite)
+            if (!insideMain)
             {
                 handled = true;
                 return (IntPtr)(-1); // HTTRANSPARENT - Click goes straight through to apps underneath!
@@ -191,10 +175,6 @@ public partial class MainWindow : Window
         if (e.PropertyName == nameof(ViewModel.IsExpanded))
         {
             Dispatcher.Invoke(() => AnimateState(ViewModel.IsExpanded, isInitial: false));
-        }
-        else if (e.PropertyName == nameof(ViewModel.IsSatelliteVisible))
-        {
-            Dispatcher.Invoke(() => AnimateSatellite(ViewModel.IsSatelliteVisible));
         }
     }
 
@@ -232,7 +212,6 @@ public partial class MainWindow : Window
             targetRadius = 17;
         }
 
-        double satLeft = (targetW / 2.0) + 12.0;
         // Always maintain Apple smooth organic capsule curvature (zero sharp corners or shadow artifacts)
         CornerRadius radius = new CornerRadius(targetRadius);
 
@@ -245,10 +224,6 @@ public partial class MainWindow : Window
             CompactView.Opacity = isExpanded ? 0.0 : 1.0;
             ExpandedView.Visibility = isExpanded ? Visibility.Visible : Visibility.Collapsed;
             ExpandedView.Opacity = isExpanded ? 1.0 : 0.0;
-            if (SatelliteBubble != null)
-            {
-                Canvas.SetLeft(SatelliteBubble, satLeft);
-            }
             return;
         }
 
@@ -264,13 +239,6 @@ public partial class MainWindow : Window
         IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
         IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
         IslandContainer.CornerRadius = radius;
-
-        // Smoothly glide satellite bubble with island flank
-        if (SatelliteBubble != null)
-        {
-            var animSatLeft = new DoubleAnimation(satLeft, new Duration(duration)) { EasingFunction = easeSpring };
-            SatelliteBubble.BeginAnimation(Canvas.LeftProperty, animSatLeft);
-        }
 
         // Apple Jelly Squash & Stretch Effect (Delicate organic elastic deformation)
         if (IslandSpringScale != null)
@@ -385,39 +353,6 @@ public partial class MainWindow : Window
         ExpandedView.BeginAnimation(UIElement.OpacityProperty, modeFade);
     }
 
-    private void AnimateSatellite(bool isVisible)
-    {
-        if (SatelliteBubble == null || SatelliteScale == null || SatelliteTranslate == null) return;
-
-        if (isVisible)
-        {
-            SatelliteBubble.Visibility = Visibility.Visible;
-            double currentW = IslandContainer.ActualWidth > 0 ? IslandContainer.ActualWidth : (ViewModel.IsMediaPlaying ? 295 : 210);
-            Canvas.SetLeft(SatelliteBubble, (currentW / 2.0) + 12.0);
-
-            var spring = new BackEase { Amplitude = 0.35, EasingMode = EasingMode.EaseOut };
-            var scaleAnim = new DoubleAnimation(0.2, 1.0, TimeSpan.FromMilliseconds(260)) { EasingFunction = spring };
-            SatelliteScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
-            SatelliteScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
-
-            var slideAnim = new DoubleAnimation(-18.0, 0.0, TimeSpan.FromMilliseconds(260))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            SatelliteTranslate.BeginAnimation(TranslateTransform.XProperty, slideAnim);
-        }
-        else
-        {
-            var scaleAnim = new DoubleAnimation(0.0, TimeSpan.FromMilliseconds(160));
-            scaleAnim.Completed += (s, e) =>
-            {
-                if (!ViewModel.IsSatelliteVisible) SatelliteBubble.Visibility = Visibility.Collapsed;
-            };
-            SatelliteScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
-            SatelliteScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
-        }
-    }
-
     private void IslandContainer_MouseEnter(object sender, MouseEventArgs e)
     {
         if (ViewModel.IsCompact)
@@ -428,12 +363,6 @@ public partial class MainWindow : Window
             var animH = new DoubleAnimation(36, TimeSpan.FromMilliseconds(200)) { EasingFunction = ease };
             IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
             IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
-
-            if (SatelliteBubble != null)
-            {
-                var animSat = new DoubleAnimation(((baseW + 18) / 2.0) + 12.0, TimeSpan.FromMilliseconds(200)) { EasingFunction = ease };
-                SatelliteBubble.BeginAnimation(Canvas.LeftProperty, animSat);
-            }
         }
     }
 
@@ -447,12 +376,6 @@ public partial class MainWindow : Window
             var animH = new DoubleAnimation(34, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease };
             IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
             IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
-
-            if (SatelliteBubble != null)
-            {
-                var animSat = new DoubleAnimation((baseW / 2.0) + 12.0, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease };
-                SatelliteBubble.BeginAnimation(Canvas.LeftProperty, animSat);
-            }
         }
     }
 
@@ -551,28 +474,6 @@ public partial class MainWindow : Window
     {
         double percent = Math.Clamp(x / elem.ActualWidth, 0.0, 1.0);
         ViewModel.SeekCommand.Execute(percent);
-    }
-
-    private void SatelliteBubble_PreviewMouseDown(object sender, MouseButtonEventArgs e)
-    {
-        ViewModel.OpenSatelliteTabCommand.Execute(null);
-        e.Handled = true;
-    }
-
-    private void SatelliteBubble_MouseEnter(object sender, MouseEventArgs e)
-    {
-        var ease = new BackEase { Amplitude = 0.35, EasingMode = EasingMode.EaseOut };
-        var anim = new DoubleAnimation(1.12, TimeSpan.FromMilliseconds(160)) { EasingFunction = ease };
-        SatelliteScale.BeginAnimation(ScaleTransform.ScaleXProperty, anim);
-        SatelliteScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
-    }
-
-    private void SatelliteBubble_MouseLeave(object sender, MouseEventArgs e)
-    {
-        var ease = new BackEase { Amplitude = 0.35, EasingMode = EasingMode.EaseOut };
-        var anim = new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(160)) { EasingFunction = ease };
-        SatelliteScale.BeginAnimation(ScaleTransform.ScaleXProperty, anim);
-        SatelliteScale.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
     }
 
     // Touch & Mouse Handling for Compact Pill (Tap to Expand, Drag to Reposition)
