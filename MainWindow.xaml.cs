@@ -220,6 +220,12 @@ public partial class MainWindow : Window
             IslandContainer.Width = targetW;
             IslandContainer.Height = targetH;
             IslandContainer.CornerRadius = radius;
+            if (AmbientGlowBorder != null)
+            {
+                AmbientGlowBorder.Width = targetW;
+                AmbientGlowBorder.Height = targetH;
+                AmbientGlowBorder.CornerRadius = radius;
+            }
             CompactView.Visibility = isExpanded ? Visibility.Collapsed : Visibility.Visible;
             CompactView.Opacity = isExpanded ? 0.0 : 1.0;
             ExpandedView.Visibility = isExpanded ? Visibility.Visible : Visibility.Collapsed;
@@ -239,6 +245,13 @@ public partial class MainWindow : Window
         IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
         IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
         IslandContainer.CornerRadius = radius;
+
+        if (AmbientGlowBorder != null)
+        {
+            AmbientGlowBorder.BeginAnimation(FrameworkElement.WidthProperty, animW);
+            AmbientGlowBorder.BeginAnimation(FrameworkElement.HeightProperty, animH);
+            AmbientGlowBorder.CornerRadius = radius;
+        }
 
         // Apple Jelly Squash & Stretch Effect (Delicate organic elastic deformation)
         if (IslandSpringScale != null)
@@ -363,6 +376,11 @@ public partial class MainWindow : Window
             var animH = new DoubleAnimation(36, TimeSpan.FromMilliseconds(200)) { EasingFunction = ease };
             IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
             IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
+            if (AmbientGlowBorder != null)
+            {
+                AmbientGlowBorder.BeginAnimation(FrameworkElement.WidthProperty, animW);
+                AmbientGlowBorder.BeginAnimation(FrameworkElement.HeightProperty, animH);
+            }
         }
     }
 
@@ -376,6 +394,11 @@ public partial class MainWindow : Window
             var animH = new DoubleAnimation(34, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease };
             IslandContainer.BeginAnimation(FrameworkElement.WidthProperty, animW);
             IslandContainer.BeginAnimation(FrameworkElement.HeightProperty, animH);
+            if (AmbientGlowBorder != null)
+            {
+                AmbientGlowBorder.BeginAnimation(FrameworkElement.WidthProperty, animW);
+                AmbientGlowBorder.BeginAnimation(FrameworkElement.HeightProperty, animH);
+            }
         }
     }
 
@@ -656,7 +679,12 @@ public partial class MainWindow : Window
             currentRadius = 17;
         }
 
-        IslandContainer.CornerRadius = new CornerRadius(currentRadius);
+        var r = new CornerRadius(currentRadius);
+        IslandContainer.CornerRadius = r;
+        if (AmbientGlowBorder != null)
+        {
+            AmbientGlowBorder.CornerRadius = r;
+        }
     }
 
     public void ToggleIsland()

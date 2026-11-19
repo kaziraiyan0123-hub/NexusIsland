@@ -182,6 +182,7 @@ public class MainViewModel : INotifyPropertyChanged
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(AmbientGlowVisibility));
                 OnPropertyChanged(nameof(AmbientGlowStatusText));
+                OnPropertyChanged(nameof(AmbientBloomOpacity));
             }
         }
     }
@@ -859,8 +860,15 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public double AmbientBloomOpacity => Media.IsPlaying ? Math.Clamp(0.50 + AudioPeak * 0.40, 0.50, 0.95) : 0.60;
-    public double AmbientBloomBlur => Media.IsPlaying ? Math.Clamp(36.0 + AudioPeak * 22.0, 36.0, 58.0) : 40.0;
+    public double AmbientBloomOpacity
+    {
+        get
+        {
+            if (!AmbientGlowEnabled) return 0.0;
+            return Media.IsPlaying ? Math.Clamp(0.40 + AudioPeak * 0.35, 0.40, 0.85) : 0.45;
+        }
+    }
+    public double AmbientBloomBlur => Media.IsPlaying ? Math.Clamp(20.0 + AudioPeak * 12.0, 20.0, 32.0) : 24.0;
 
     public double EqBar1 => Media.IsPlaying ? Math.Clamp(AudioPeak * 14.0 + 3.5 + 3.0 * Math.Sin(_wavePhase * 1.2), 3.0, 18.0) : 0.0;
     public double EqBar2 => Media.IsPlaying ? Math.Clamp(AudioPeak * 18.0 + 5.0 + 5.0 * Math.Cos(_wavePhase * 1.5), 4.0, 20.0) : 0.0;

@@ -22,8 +22,8 @@
         Topmost="{Binding AlwaysOnTop}"
         ShowInTaskbar="False"
         WindowStartupLocation="Manual"
-        Width="680"
-        Height="560"
+        Width="740"
+        Height="620"
         ResizeMode="NoResize">
 
     <Window.DataContext>
@@ -31,40 +31,21 @@
     </Window.DataContext>
 
     <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0" Background="{x:Null}">
-        <!-- Dual-Stage Radiant Ambient Bloom Halo behind Island Container -->
-        <!-- Stage 1: Soft Atmospheric Outer Aura -->
-        <Border HorizontalAlignment="Center" VerticalAlignment="Top"
-                Width="{Binding ElementName=IslandContainer, Path=ActualWidth}"
-                Height="{Binding ElementName=IslandContainer, Path=ActualHeight}"
-                CornerRadius="{Binding ElementName=IslandContainer, Path=CornerRadius}"
-                Visibility="{Binding AmbientGlowVisibility}"
-                Background="{Binding CurrentTheme.AccentBrush}"
-                Opacity="0.25" IsHitTestVisible="False">
-            <Border.Effect>
-                <BlurEffect Radius="36" RenderingBias="Quality" />
-            </Border.Effect>
-            <Border.LayoutTransform>
-                <ScaleTransform ScaleX="1.08" ScaleY="1.15" />
-            </Border.LayoutTransform>
-        </Border>
-
-        <!-- Stage 2: Vibrant Dynamic Inner Bloom -->
-        <Border HorizontalAlignment="Center" VerticalAlignment="Top"
-                Width="{Binding ElementName=IslandContainer, Path=ActualWidth}"
-                Height="{Binding ElementName=IslandContainer, Path=ActualHeight}"
-                CornerRadius="{Binding ElementName=IslandContainer, Path=CornerRadius}"
+        <!-- Organic Liquid Glass Ambient Bloom (Perfect Capsule Contour, Zero Rectangular Clipping) -->
+        <Border x:Name="AmbientGlowBorder"
+                HorizontalAlignment="Center" VerticalAlignment="Top"
+                Width="210" Height="34"
+                CornerRadius="17"
                 Visibility="{Binding AmbientGlowVisibility}"
                 Background="{Binding CurrentTheme.AccentGradient}"
-                Opacity="{Binding AmbientBloomOpacity}" IsHitTestVisible="False">
+                Opacity="{Binding AmbientBloomOpacity}"
+                IsHitTestVisible="False">
             <Border.Effect>
-                <BlurEffect Radius="{Binding AmbientBloomBlur}" RenderingBias="Quality" />
+                <BlurEffect Radius="22" RenderingBias="Performance" />
             </Border.Effect>
-            <Border.LayoutTransform>
-                <ScaleTransform ScaleX="{Binding IslandScale}" ScaleY="{Binding IslandScale}" />
-            </Border.LayoutTransform>
         </Border>
 
-        <!-- Floating Main Island Container (Strictly Centered, Never Moves When Satellite Pops) -->
+        <!-- Floating Main Island Container (Strictly Centered) -->
         <Border x:Name="IslandContainer"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Top"
@@ -82,6 +63,14 @@
                 MouseEnter="IslandContainer_MouseEnter"
                 MouseLeave="IslandContainer_MouseLeave"
                 PreviewMouseWheel="IslandContainer_PreviewMouseWheel">
+
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="26"
+                                  ShadowDepth="0"
+                                  Color="{Binding CurrentTheme.AccentColor}"
+                                  Opacity="{Binding AmbientBloomOpacity}"
+                                  RenderingBias="Performance" />
+            </Border.Effect>
 
             <Border.ContextMenu>
                 <ContextMenu Background="#D0141620" BorderBrush="#45FFFFFF" BorderThickness="1">
